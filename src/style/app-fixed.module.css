@@ -632,7 +632,7 @@
   --dayWeekends-bg: #eaebef;
   --dayToday-bg: #eaebef;
   --dayToday-color: #7c9beb;
-  --dayOutside-bg: #ffffff;
+  --dayOutside-bg: #c2c2c2;
   --dayOutside-color: #eaebef;
 
   --daySelected-bg: #0056b3;
@@ -2751,6 +2751,7 @@ form label,
 
 .day__outside {
   background-color: var(--dayOutside-bg);
+  opacity: 0.25;
   color: var(--dayOutside-color);
 }
 
@@ -2760,7 +2761,6 @@ form label,
 }
 
 .day {
-  background-color: var(--day-bg);
   padding-left: 0.3rem;
   padding-right: 0.3rem;
   border-radius: 10px;
