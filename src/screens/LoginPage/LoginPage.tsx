@@ -164,8 +164,9 @@ const loginPage = (): JSX.Element => {
 
   useEffect(() => {
     const isLoggedIn = getItem('IsLoggedIn');
+    const isAdmin = getItem('role') === 'administrator';
     if (isLoggedIn == 'TRUE') {
-      navigate(getItem('userId') !== null ? '/user/organizations' : '/orglist');
+      navigate(!isAdmin ? '/user/organizations' : '/orglist');
       extendSession();
     }
   }, []);
@@ -361,7 +362,9 @@ const loginPage = (): JSX.Element => {
           setItem('userId', loggedInUserId);
         }
 
-        navigate(role === 'admin' ? '/orglist' : '/user/organizations');
+        navigate(isAdmin ? '/orglist' : '/user/organizations', {
+          replace: true,
+        });
         startSession();
       } else {
         toast.warn(tErrors('notFound') as string);
