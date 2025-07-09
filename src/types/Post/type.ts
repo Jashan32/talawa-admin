@@ -97,33 +97,35 @@ export type PostComments = {
 }[];
 
 export type PostLikes = {
-  firstName: string;
-  lastName: string;
-  id: string;
-}[];
+  edges: {
+    node: {
+      id: string;
+      name: string;
+    };
+  }[];
+};
 
 export type PostNode = {
   commentCount: number;
   createdAt: string;
   creator: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    _id: string;
+    name: string;
+    id: string;
   };
   imageUrl: string | null;
-  likeCount: number;
-  likedBy: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  }[];
+  upVotesCount: number;
+  upVoters: {
+  edges: {
+    node: {
+      id: string;
+      name: string;
+    };
+  }[]};
   pinned: boolean;
-  text: string;
+  caption: string;
   title: string;
   videoUrl: string | null;
-  _id: string;
-
+  id: string;
   comments: PostComments;
   likes: PostLikes;
 };

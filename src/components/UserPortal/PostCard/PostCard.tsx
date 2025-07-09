@@ -89,15 +89,15 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
   const [comments, setComments] = React.useState(props.comments);
   const [numComments, setNumComments] = React.useState(props.commentCount);
 
-  const [likes, setLikes] = React.useState(props.likeCount);
+  const [likes, setLikes] = React.useState(props.upVotesCount);
   const [isLikedByUser, setIsLikedByUser] = React.useState(likedByUser);
   const [commentInput, setCommentInput] = React.useState('');
   const [viewPost, setViewPost] = React.useState(false);
   const [showEditPost, setShowEditPost] = React.useState(false);
-  const [postContent, setPostContent] = React.useState<string>(props.text);
+  const [postContent, setPostContent] = React.useState<string>(props.caption);
 
   // Post creator's full name
-  const postCreator = `${props.creator.firstName} ${props.creator.lastName}`;
+  const postCreator = `${props.creator.name}`;
 
   // GraphQL mutations
   const [likePost, { loading: likeLoading }] = useMutation(LIKE_POST);
@@ -122,8 +122,8 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
   const handleToggleLike = async (): Promise<void> => {
     if (isLikedByUser) {
       try {
-        const { data } = await unLikePost({ variables: { postId: props.id } });
-
+        const { data } = await unLikePost({ variables: { postId: props.id, creatorId: userId } });
+        
         if (data) {
           setLikes((likes) => likes - 1);
           setIsLikedByUser(false);
@@ -133,6 +133,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
       }
     } else {
       try {
+        console.log('Unliking post:', props.id);
         const { data } = await likePost({ variables: { postId: props.id } });
 
         if (data) {
@@ -320,7 +321,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
           className={styles.postImage}
           variant="top"
           src={
-            props.image === '' || props.image === null
+            props.image === '' || props.image === null|| props.image === undefined
               ? UserDefault
               : props.image
           }
@@ -333,7 +334,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
             {t('postedOn', { date: props.postedAt })}
           </Card.Subtitle>
           <Card.Text className={`${styles.cardText} mt-4`}>
-            {props.text}
+            {props.caption}
           </Card.Text>
         </Card.Body>
         <Card.Footer style={{ border: 'none', background: 'white' }}>
@@ -354,7 +355,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
           <div className="w-50 d-flex  align-items-center justify-content-center">
             <img
               src={
-                props.image === '' || props.image === null
+                props.image === '' || props.image === null|| props.image === undefined
                   ? UserDefault
                   : props.image
               }
@@ -376,7 +377,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
               <p style={{ fontSize: '1.5rem', fontWeight: 600 }}>
                 {props.title}
               </p>
-              <p>{props.text}</p>
+              <p>{props.caption}</p>
             </div>
             <h4>Comments</h4>
             <div className={styles.commentContainer}>

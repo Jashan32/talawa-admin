@@ -2109,36 +2109,32 @@ export interface InterfaceCreateFund {
 export interface InterfacePostCard {
   id: string;
   creator: {
-    firstName: string;
-    lastName: string;
-    email: string;
+    name: string;
     id: string;
   };
   postedAt: string;
   image: string | null;
   video: string | null;
-  text: string;
+  caption: string;
   title: string;
-  likeCount: number;
+  upVotesCount: number;
   commentCount: number;
   comments: {
     id: string;
     creator: {
       id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
+      name: string;
     };
     likeCount: number;
     likedBy: {
-      id: string;
-    }[];
+      edges: {
+        node: {
+          id: string;
+          name: string;
+        };
+      }[];
+    };
     text: string;
-  }[];
-  likedBy: {
-    firstName: string;
-    lastName: string;
-    id: string;
   }[];
   fetchPosts: () => void;
 }

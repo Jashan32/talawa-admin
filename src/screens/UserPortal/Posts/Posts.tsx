@@ -123,9 +123,18 @@ export default function home(): JSX.Element {
 
   const {
     data,
-    refetch,
     loading: loadingPosts,
-  } = useQuery(ORGANIZATION_POST_LIST, { variables: { id: orgId, first: 10 } });
+    error,
+    refetch,
+  } = useQuery(ORGANIZATION_POST_LIST, {
+    variables: {
+      input: { id: orgId as string },
+      //  after: after ?? null,
+      //  before: before ?? null,
+      first: 32
+    },
+  });
+
 
   const [adContent, setAdContent] = useState<Ad[]>([]);
   const userId: string | null = getItem('userId');
@@ -142,7 +151,7 @@ export default function home(): JSX.Element {
   // Effect hook to update posts state when data changes
   useEffect(() => {
     if (data) {
-      setPosts(data.organizations[0].posts.edges);
+      setPosts(data.organization.posts.edges);
     }
   }, [data]);
 
@@ -175,23 +184,20 @@ export default function home(): JSX.Element {
   const getCardProps = (node: PostNode): InterfacePostCard => {
     const {
       creator,
-      _id,
+      id,
       imageUrl,
       videoUrl,
       title,
-      text,
-      likeCount,
+      caption,
+      upVotesCount,
+      upVoters,
       commentCount,
-      likedBy,
       comments,
     } = node;
-
-    const allLikes: PostLikes = likedBy.map((value) => ({
-      firstName: value.firstName,
-      lastName: value.lastName,
-      id: value._id,
-    }));
-
+    const allLikes: PostLikes = upVoters?.edges?.map((value) => ({
+      name: value.node?.name || '',
+      id: value.node?.id || '',
+    })) || [];
     const postComments: PostComments = comments?.map((value) => ({
       id: value.id,
       creator: {
@@ -211,21 +217,18 @@ export default function home(): JSX.Element {
       month: 'short',
       day: 'numeric',
     }).format(date);
-
     const cardProps: InterfacePostCard = {
-      id: _id,
+      id: id,
       creator: {
-        id: creator._id,
-        firstName: creator.firstName,
-        lastName: creator.lastName,
-        email: creator.email,
+        id: creator.id,
+        name: creator.name,
       },
       postedAt: formattedDate,
       image: imageUrl,
       video: videoUrl,
       title,
-      text,
-      likeCount,
+      caption,
+      upVotesCount,
       commentCount,
       comments: postComments,
       likedBy: allLikes,
@@ -301,7 +304,7 @@ export default function home(): JSX.Element {
               <Carousel responsive={responsive}>
                 {pinnedPosts.map(({ node }: { node: PostNode }) => {
                   const cardProps = getCardProps(node);
-                  return <PostCard key={node._id} {...cardProps} />;
+                  return <PostCard key={node.id} {...cardProps} />;
                 })}
               </Carousel>
             )}
@@ -332,7 +335,7 @@ export default function home(): JSX.Element {
                   <Row className="my-2">
                     {posts.map(({ node }: { node: PostNode }) => {
                       const cardProps = getCardProps(node);
-                      return <PostCard key={node._id} {...cardProps} />;
+                      return <PostCard key={node.id} {...cardProps} />;
                     })}
                   </Row>
                 ) : (

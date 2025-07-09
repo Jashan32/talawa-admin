@@ -29,9 +29,20 @@ export const ORGANIZATION_POST_LIST = gql`
             id
             caption
             creator {
+              name
               id
             }
             createdAt
+           downVotesCount
+           upVotesCount
+           upVoters(first: 32) {
+              edges{
+                node {
+                  id
+                  name
+                }
+              }
+            }
           }
           cursor
         }
