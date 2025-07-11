@@ -34,10 +34,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import Button from 'react-bootstrap/Button';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router';
+import { useParams } from 'react-router';
 import styles from 'style/app-fixed.module.css';
 import { UPDATE_CURRENT_USER_MUTATION } from 'GraphQl/Mutations/mutations';
-import { CURRENT_USER } from 'GraphQl/Queries/Queries';
+import { GET_USER_BY_ID } from 'GraphQl/Queries/Queries';
 import { toast } from 'react-toastify';
 import { languages } from 'utils/languages';
 import { errorHandler } from 'utils/errorHandler';
@@ -63,16 +63,14 @@ import { sanitizeAvatars } from 'utils/sanitizeAvatar';
 
 type MemberDetailProps = { id?: string };
 
-const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
+const MemberDetail: React.FC<MemberDetailProps> = (): JSX.Element => {
   const { t } = useTranslation('translation', { keyPrefix: 'memberDetail' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t: tCommon } = useTranslation('common');
-  const location = useLocation();
   const isMounted = useRef(true);
-  const { getItem, setItem } = useLocalStorage();
+  const { setItem } = useLocalStorage();
   const [show, setShow] = useState(false);
   const [isUpdated, setisUpdated] = useState(false);
-  const currentId = location.state?.id || getItem('id') || id;
   const originalImageState = React.useRef<string>('');
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
 
@@ -101,17 +99,21 @@ const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
     state: '',
     workPhoneNumber: '',
   });
-
+  const { userId } = useParams();
   // Mutation to update the user details
   const [updateUser] = useMutation(UPDATE_CURRENT_USER_MUTATION);
-  const { data: userData, loading } = useQuery(CURRENT_USER, {
-    variables: { id: currentId },
+  const { data: userData, loading } = useQuery(GET_USER_BY_ID, {
+    variables: {
+      input: {
+        id: userId,
+      },
+    },
   });
 
   useEffect(() => {
-    if (userData?.currentUser) {
-      setFormState(userData.currentUser);
-      originalImageState.current = userData.currentUser.avatarURL || '';
+    if (userData?.user != undefined) {
+      setFormState(userData?.user);
+      originalImageState.current = userData.user.avatarURL || '';
     }
   }, [userData]);
 

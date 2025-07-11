@@ -153,7 +153,7 @@ function app(): JSX.Element {
                 path="orgtags/:orgId/subTags/:tagId"
                 element={<SubTags />}
               />
-              <Route path="/member/:orgId" element={<MemberDetail />} />
+              <Route path="/member/:orgId/:userId" element={<MemberDetail />} />
               <Route
                 path="/orgevents/:orgId"
                 element={<OrganizationEvents />}

@@ -422,7 +422,7 @@ function OrganizationPeople(): JSX.Element {
       renderCell: (params: GridCellParams) => {
         return (
           <Link
-            to={`/member/${currentUrl}`}
+            to={`/member/${currentUrl}/${params.row._id}`}
             state={{ id: params.row._id }}
             style={{ fontSize: '15px' }}
             className={`${styles.membername} ${styles.subtleBlueGrey}`}
