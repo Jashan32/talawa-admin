@@ -50,9 +50,7 @@ interface InterfaceCommentCardProps {
   id: string;
   creator: {
     id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
+    name: string;
   };
   likeCount: number;
   likedBy: {
@@ -65,7 +63,7 @@ interface InterfaceCommentCardProps {
 
 function commentCard(props: InterfaceCommentCardProps): JSX.Element {
   // Full name of the comment creator
-  const creatorName = `${props.creator.firstName} ${props.creator.lastName}`;
+  const creatorName = `${props.creator.name}`;
 
   // Hook to get user ID from local storage
   const { getItem } = useLocalStorage();

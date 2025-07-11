@@ -66,7 +66,7 @@ import UserDefault from '../../../assets/images/defaultImg.png';
 
 interface InterfaceCommentCardProps {
   id: string;
-  creator: { id: string; firstName: string; lastName: string; email: string };
+  creator: { id: string; name: string };
   likeCount: number;
   likedBy: { id: string }[];
   text: string;
@@ -77,17 +77,16 @@ interface InterfaceCommentCardProps {
 export default function postCard(props: InterfacePostCard): JSX.Element {
   const { t } = useTranslation('translation', { keyPrefix: 'postCard' });
   const { t: tCommon } = useTranslation('common');
-
+  console.log(props);
   const { getItem } = useLocalStorage();
 
   // Retrieve user ID from local storage
   const userId = getItem('userId') as string;
   // Check if the post is liked by the current user
-  console.log(props)
   const likedByUser = props.likedBy.some((likedBy) => likedBy.id === userId);
   // State variables
   const [comments, setComments] = React.useState(props.comments);
-  const [numComments, setNumComments] = React.useState(props.commentCount);
+  const [numComments, setNumComments] = React.useState(props.commentsCount);
 
   const [likes, setLikes] = React.useState(props.upVotesCount);
   const [isLikedByUser, setIsLikedByUser] = React.useState(likedByUser);
@@ -389,13 +388,12 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
             <div className={styles.commentContainer}>
               {numComments ? (
                 comments.map((comment, index: number) => {
+                  console.log(comments);
                   const cardProps: InterfaceCommentCardProps = {
                     id: comment.id,
                     creator: {
                       id: comment.creator.id,
-                      firstName: comment.creator.firstName,
-                      lastName: comment.creator.lastName,
-                      email: comment.creator.email,
+                      name: comment.creator.name,
                     },
                     likeCount: comment.likeCount,
                     likedBy: comment.likedBy,

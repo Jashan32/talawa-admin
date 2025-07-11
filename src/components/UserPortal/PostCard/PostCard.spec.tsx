@@ -192,11 +192,10 @@ describe('Testing PostCard Component [User Portal]', () => {
     const cardProps = {
       id: 'postId',
       userImage: 'image.png',
-      creator: 
-        {
-          name: 'test user',
-          id: '1',
-        },
+      creator: {
+        name: 'test user',
+        id: '1',
+      },
       postedAt: '',
       image: '',
       video: '',
@@ -264,11 +263,10 @@ describe('Testing PostCard Component [User Portal]', () => {
     const cardProps = {
       id: '',
       userImage: 'image.png',
-      creator: 
-        {
-          name: 'test user',
-          id: '1',
-        },
+      creator: {
+        name: 'test user',
+        id: '1',
+      },
       postedAt: '',
       image: '',
       video: '',
@@ -311,11 +309,10 @@ describe('Testing PostCard Component [User Portal]', () => {
     const cardProps = {
       id: 'postId',
       userImage: 'image.png',
-      creator: 
-        {
-          name: 'test user',
-          id: '1',
-        },
+      creator: {
+        name: 'test user',
+        id: '1',
+      },
       postedAt: '',
       image: '',
       video: '',
@@ -366,11 +363,10 @@ describe('Testing PostCard Component [User Portal]', () => {
     const cardProps = {
       id: '',
       userImage: 'image.png',
-      creator: 
-        {
-          name: 'test user',
-          id: '1',
-        },
+      creator: {
+        name: 'test user',
+        id: '1',
+      },
       postedAt: '',
       image: '',
       video: '',
@@ -414,11 +410,10 @@ describe('Testing PostCard Component [User Portal]', () => {
     const cardProps = {
       id: '',
       userImage: 'image.png',
-      creator: 
-        {
-          name: 'test user',
-          id: '1',
-        },
+      creator: {
+        name: 'test user',
+        id: '1',
+      },
       postedAt: '',
       image: '',
       video: '',
@@ -465,11 +460,10 @@ describe('Testing PostCard Component [User Portal]', () => {
     const cardProps = {
       id: '',
       userImage: 'image.png',
-      creator: 
-        {
-          name: 'test user',
-          id: '1',
-        },
+      creator: {
+        name: 'test user',
+        id: '1',
+      },
       postedAt: '',
       image: '',
       video: '',

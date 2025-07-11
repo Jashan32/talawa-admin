@@ -26,6 +26,28 @@ export const ORGANIZATION_POST_LIST = gql`
       posts(after: $after, before: $before, first: $first, last: $last) {
         edges {
           node {
+            commentsCount
+            comments(first: 1) {
+              edges {
+                node {
+                  id
+                  upVotesCount
+                  body
+                  upVoters(first: 1) {
+                    edges {
+                      node {
+                        id
+                        name
+                      }
+                    }
+                  }
+                  creator {
+                    name
+                    id
+                  }
+                }
+              }
+            }
             id
             caption
             creator {

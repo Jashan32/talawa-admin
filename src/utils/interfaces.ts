@@ -2120,9 +2120,9 @@ export interface InterfacePostCard {
   upVotesCount: number;
   commentCount: number;
   likedBy: {
-      id: string;
-      name: string;
-    }[];
+    id: string;
+    name: string;
+  }[];
   comments: {
     id: string;
     creator: {

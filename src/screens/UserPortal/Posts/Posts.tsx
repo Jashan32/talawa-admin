@@ -191,7 +191,7 @@ export default function home(): JSX.Element {
       caption,
       upVotesCount,
       upVoters,
-      commentCount,
+      commentsCount,
       comments,
     } = node;
     const allLikes: PostLikes =
@@ -199,18 +199,22 @@ export default function home(): JSX.Element {
         name: value.node?.name || '',
         id: value.node?.id || '',
       })) || [];
-    const postComments: PostComments = comments?.map((value) => ({
-      id: value.id,
-      creator: {
-        firstName: value.creator?.firstName ?? '',
-        lastName: value.creator?.lastName ?? '',
-        id: value.creator?.id ?? '',
-        email: value.creator?.email ?? '',
-      },
-      likeCount: value.likeCount,
-      likedBy: value.likedBy?.map((like) => ({ id: like?.id ?? '' })) ?? [],
-      text: value.text,
-    }));
+    const postComments: PostComments = comments?.edges.map((value) => {
+      console.log('value');
+      return {
+        id: value.node.id,
+        creator: {
+          name: value.node.creator?.name ?? '',
+          id: value.node.creator?.id ?? '',
+        },
+        likeCount: value.node.upVotesCount,
+        likedBy:
+          value.node.upVoters.edges?.map((like) => ({
+            id: like?.node.id ?? '',
+          })) ?? [],
+        text: value.node.body,
+      };
+    });
 
     const date = new Date(node.createdAt);
     const formattedDate = new Intl.DateTimeFormat('en-US', {
@@ -230,7 +234,7 @@ export default function home(): JSX.Element {
       title,
       caption,
       upVotesCount,
-      commentCount,
+      commentsCount,
       comments: postComments,
       likedBy: allLikes,
       fetchPosts: () => refetch(),
