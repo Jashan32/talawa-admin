@@ -99,6 +99,8 @@ export default function home(): JSX.Element {
   const { getItem } = useLocalStorage();
   const [posts, setPosts] = useState([]);
   const [pinnedPosts, setPinnedPosts] = useState([]);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [loadingMorePosts, setLoadingMorePosts] = useState(false);
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [postImg, setPostImg] = useState<string | null>('');
@@ -124,17 +126,14 @@ export default function home(): JSX.Element {
   const {
     data,
     loading: loadingPosts,
-    error,
     refetch,
+    fetchMore,
   } = useQuery(ORGANIZATION_POST_LIST, {
     variables: {
       input: { id: orgId as string },
-      //  after: after ?? null,
-      //  before: before ?? null,
-      first: 32
+      first: 10,
     },
   });
-
 
   const [adContent, setAdContent] = useState<Ad[]>([]);
   const userId: string | null = getItem('userId');
@@ -152,6 +151,7 @@ export default function home(): JSX.Element {
   useEffect(() => {
     if (data) {
       setPosts(data.organization.posts.edges);
+      setHasMorePosts(data.organization.posts.pageInfo.hasNextPage);
     }
   }, [data]);
 
@@ -194,10 +194,11 @@ export default function home(): JSX.Element {
       commentCount,
       comments,
     } = node;
-    const allLikes: PostLikes = upVoters?.edges?.map((value) => ({
-      name: value.node?.name || '',
-      id: value.node?.id || '',
-    })) || [];
+    const allLikes: PostLikes =
+      upVoters?.edges?.map((value) => ({
+        name: value.node?.name || '',
+        id: value.node?.id || '',
+      })) || [];
     const postComments: PostComments = comments?.map((value) => ({
       id: value.id,
       creator: {
@@ -250,6 +251,44 @@ export default function home(): JSX.Element {
    */
   const handleModalClose = (): void => {
     setShowModal(false);
+  };
+
+  /**
+   * Loads more posts using pagination.
+   */
+  const loadMorePosts = async (): Promise<void> => {
+    if (!hasMorePosts || loadingMorePosts) return;
+
+    setLoadingMorePosts(true);
+    try {
+      await fetchMore({
+        variables: {
+          input: { id: orgId as string },
+          after: data?.organization.posts.pageInfo.endCursor,
+          first: 10,
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+
+          return {
+            organization: {
+              ...prev.organization,
+              posts: {
+                ...fetchMoreResult.organization.posts,
+                edges: [
+                  ...prev.organization.posts.edges,
+                  ...fetchMoreResult.organization.posts.edges,
+                ],
+              },
+            },
+          };
+        },
+      });
+    } catch (error) {
+      console.error('Error loading more posts:', error);
+    } finally {
+      setLoadingMorePosts(false);
+    }
   };
 
   return (
@@ -332,12 +371,33 @@ export default function home(): JSX.Element {
             ) : (
               <>
                 {posts.length > 0 ? (
-                  <Row className="my-2">
-                    {posts.map(({ node }: { node: PostNode }) => {
-                      const cardProps = getCardProps(node);
-                      return <PostCard key={node.id} {...cardProps} />;
-                    })}
-                  </Row>
+                  <>
+                    <Row className="my-2">
+                      {posts.map(({ node }: { node: PostNode }) => {
+                        const cardProps = getCardProps(node);
+                        return <PostCard key={node.id} {...cardProps} />;
+                      })}
+                    </Row>
+                    {hasMorePosts && (
+                      <div className="d-flex justify-content-center my-4">
+                        <Button
+                          variant="outline-primary"
+                          onClick={loadMorePosts}
+                          disabled={loadingMorePosts}
+                          data-testid="loadMoreButton"
+                        >
+                          {loadingMorePosts ? (
+                            <>
+                              <HourglassBottomIcon className="me-2" />
+                              {tCommon('loading')}
+                            </>
+                          ) : (
+                            'Load More'
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="container flex justify-content-center my-4">
                     {t(`nothingToShowHere`)}

@@ -33,10 +33,10 @@ export const ORGANIZATION_POST_LIST = gql`
               id
             }
             createdAt
-           downVotesCount
-           upVotesCount
-           upVoters(first: 32) {
-              edges{
+            downVotesCount
+            upVotesCount
+            upVoters(first: 10) {
+              edges {
                 node {
                   id
                   name

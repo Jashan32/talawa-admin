@@ -83,8 +83,8 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
   // Retrieve user ID from local storage
   const userId = getItem('userId') as string;
   // Check if the post is liked by the current user
+  console.log(props)
   const likedByUser = props.likedBy.some((likedBy) => likedBy.id === userId);
-
   // State variables
   const [comments, setComments] = React.useState(props.comments);
   const [numComments, setNumComments] = React.useState(props.commentCount);
@@ -122,8 +122,10 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
   const handleToggleLike = async (): Promise<void> => {
     if (isLikedByUser) {
       try {
-        const { data } = await unLikePost({ variables: { postId: props.id, creatorId: userId } });
-        
+        const { data } = await unLikePost({
+          variables: { postId: props.id, creatorId: userId },
+        });
+
         if (data) {
           setLikes((likes) => likes - 1);
           setIsLikedByUser(false);
@@ -321,7 +323,9 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
           className={styles.postImage}
           variant="top"
           src={
-            props.image === '' || props.image === null|| props.image === undefined
+            props.image === '' ||
+            props.image === null ||
+            props.image === undefined
               ? UserDefault
               : props.image
           }
@@ -355,7 +359,9 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
           <div className="w-50 d-flex  align-items-center justify-content-center">
             <img
               src={
-                props.image === '' || props.image === null|| props.image === undefined
+                props.image === '' ||
+                props.image === null ||
+                props.image === undefined
                   ? UserDefault
                   : props.image
               }

@@ -497,7 +497,7 @@ export const UPDATE_EVENT_MUTATION = gql`
 
 export const LIKE_POST = gql`
   mutation likePost($postId: ID!) {
-    createPostVote(input: {postId: $postId, type: up_vote}) {
+    createPostVote(input: { postId: $postId, type: up_vote }) {
       id
     }
   }
@@ -505,7 +505,7 @@ export const LIKE_POST = gql`
 
 export const UNLIKE_POST = gql`
   mutation unlikePost($postId: ID!, $creatorId: ID!) {
-    deletePostVote(input: {postId: $postId, creatorId: $creatorId}) {
+    deletePostVote(input: { postId: $postId, creatorId: $creatorId }) {
       id
     }
   }

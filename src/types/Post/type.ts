@@ -97,13 +97,9 @@ export type PostComments = {
 }[];
 
 export type PostLikes = {
-  edges: {
-    node: {
-      id: string;
-      name: string;
-    };
-  }[];
-};
+  id: string;
+  name: string;
+}[];
 
 export type PostNode = {
   commentCount: number;
@@ -115,12 +111,13 @@ export type PostNode = {
   imageUrl: string | null;
   upVotesCount: number;
   upVoters: {
-  edges: {
-    node: {
-      id: string;
-      name: string;
-    };
-  }[]};
+    edges: {
+      node: {
+        id: string;
+        name: string;
+      };
+    }[];
+  };
   pinned: boolean;
   caption: string;
   title: string;

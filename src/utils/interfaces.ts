@@ -2119,6 +2119,10 @@ export interface InterfacePostCard {
   title: string;
   upVotesCount: number;
   commentCount: number;
+  likedBy: {
+      id: string;
+      name: string;
+    }[];
   comments: {
     id: string;
     creator: {
@@ -2127,13 +2131,9 @@ export interface InterfacePostCard {
     };
     likeCount: number;
     likedBy: {
-      edges: {
-        node: {
-          id: string;
-          name: string;
-        };
-      }[];
-    };
+      id: string;
+      name: string;
+    }[];
     text: string;
   }[];
   fetchPosts: () => void;
