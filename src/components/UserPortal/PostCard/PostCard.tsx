@@ -86,6 +86,8 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
   // State variables
   const [comments, setComments] = React.useState(props.comments);
   const [numComments, setNumComments] = React.useState(props.commentsCount);
+  const [commentsLoaded, setCommentsLoaded] = React.useState(false);
+  const [loadingComments, setLoadingComments] = React.useState(false);
 
   const [likes, setLikes] = React.useState(props.upVotesCount);
   const [isLikedByUser, setIsLikedByUser] = React.useState(likedByUser);
@@ -105,8 +107,23 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
   const [editPost] = useMutation(UPDATE_POST_MUTATION);
   const [deletePost] = useMutation(DELETE_POST_MUTATION);
 
-  // Toggle the view post modal
-  const toggleViewPost = (): void => setViewPost(!viewPost);
+  // Toggle the view post modal and load comments on-demand
+  const toggleViewPost = async (): Promise<void> => {
+    if (!viewPost && !commentsLoaded && props.loadPostComments) {
+      // Opening modal and comments not loaded yet - load them
+      setLoadingComments(true);
+      try {
+        await props.loadPostComments();
+        setCommentsLoaded(true);
+      } catch (error) {
+        console.error('Error loading comments:', error);
+        toast.error(t('errorLoadingComments') || 'Error loading comments');
+      } finally {
+        setLoadingComments(false);
+      }
+    }
+    setViewPost(!viewPost);
+  };
 
   // Toggle the edit post modal
   const toggleEditPost = (): void => setShowEditPost(!showEditPost);
@@ -284,9 +301,13 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
     }
   };
 
-  // Update comments when props change (for pagination)
+  // Update comments when props change (for pagination and initial load)
   React.useEffect(() => {
     setComments(props.comments);
+    // If comments are provided in props, mark them as loaded
+    if (props.comments.length > 0) {
+      setCommentsLoaded(true);
+    }
   }, [props.comments]);
 
   return (
@@ -394,7 +415,12 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
             </div>
             <h4>Comments</h4>
             <div className={styles.commentContainer}>
-              {numComments ? (
+              {loadingComments ? (
+                <div className="d-flex justify-content-center p-3">
+                  <HourglassBottomIcon className="me-2" />
+                  <span>Loading comments...</span>
+                </div>
+              ) : numComments ? (
                 comments.map((comment, index: number) => {
                   const cardProps: InterfaceCommentCardProps = {
                     id: comment.id,
@@ -413,7 +439,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
               ) : (
                 <p>No comments to show.</p>
               )}
-              {props.hasMoreComments && (
+              {!loadingComments && props.hasMoreComments && (
                 <div className="d-flex justify-content-center mt-3">
                   <Button
                     variant="outline-primary"

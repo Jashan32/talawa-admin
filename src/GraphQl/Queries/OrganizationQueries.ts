@@ -71,14 +71,6 @@ export const ORGANIZATION_POST_LIST = gql`
     $before: String
     $first: Int
     $last: Int
-    $commentsFirst: Int
-    $commentsAfter: String
-    $commentsBefore: String
-    $commentsLast: Int
-    $commentUpVotersFirst: Int
-    $commentUpVotersAfter: String
-    $commentUpVotersBefore: String
-    $commentUpVotersLast: Int
     $postUpVotersFirst: Int
     $postUpVotersAfter: String
     $postUpVotersBefore: String
@@ -90,51 +82,9 @@ export const ORGANIZATION_POST_LIST = gql`
         edges {
           node {
             commentsCount
-            comments(
-              first: $commentsFirst
-              after: $commentsAfter
-              before: $commentsBefore
-              last: $commentsLast
-            ) {
-              edges {
-                node {
-                  id
-                  upVotesCount
-                  body
-                  upVoters(
-                    first: $commentUpVotersFirst
-                    after: $commentUpVotersAfter
-                    before: $commentUpVotersBefore
-                    last: $commentUpVotersLast
-                  ) {
-                    edges {
-                      node {
-                        id
-                        name
-                      }
-                    }
-                    pageInfo {
-                      startCursor
-                      endCursor
-                      hasNextPage
-                      hasPreviousPage
-                    }
-                  }
-                  creator {
-                    name
-                    id
-                  }
-                }
-              }
-              pageInfo {
-                startCursor
-                endCursor
-                hasNextPage
-                hasPreviousPage
-              }
-            }
             id
             caption
+            pinnedAt
             creator {
               name
               id

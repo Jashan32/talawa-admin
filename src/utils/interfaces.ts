@@ -2105,6 +2105,12 @@ export interface InterfaceCreateFund {
  * @property {string} likedBy.lastName - The last name of the user who liked the post.
  * @property {string} likedBy.id - The unique identifier of the user who liked the post.
  * @property {function} fetchPosts - A function to fetch posts.
+ * @property {function} [loadPostComments] - A function to load comments for the post when it's opened (optional).
+ * @property {function} [loadMoreComments] - A function to load more comments with pagination (optional).
+ * @property {function} [loadMorePostUpVoters] - A function to load more post upvoters with pagination (optional).
+ * @property {function} [loadMoreCommentUpVoters] - A function to load more comment upvoters with pagination (optional).
+ * @property {boolean} [hasMoreComments] - Indicates if there are more comments to load (optional).
+ * @property {boolean} [hasMorePostUpVoters] - Indicates if there are more post upvoters to load (optional).
  */
 export interface InterfacePostCard {
   id: string;
@@ -2137,6 +2143,7 @@ export interface InterfacePostCard {
     text: string;
   }[];
   fetchPosts: () => void;
+  loadPostComments?: () => Promise<void>;
   loadMoreComments?: (after?: string) => Promise<void>;
   loadMorePostUpVoters?: (after?: string) => Promise<void>;
   loadMoreCommentUpVoters?: (
