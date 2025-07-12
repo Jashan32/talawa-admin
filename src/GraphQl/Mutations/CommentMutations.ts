@@ -38,9 +38,9 @@ export const CREATE_COMMENT_POST = gql`
  */
 
 export const LIKE_COMMENT = gql`
-  mutation likeComment($commentId: ID!) {
-    likeComment(id: $commentId) {
-      _id
+  mutation createCommentVote($commentId: ID!) {
+    createCommentVote(input: { commentId: $commentId, type: up_vote }) {
+      id
     }
   }
 `;
@@ -53,9 +53,9 @@ export const LIKE_COMMENT = gql`
  */
 
 export const UNLIKE_COMMENT = gql`
-  mutation unlikeComment($commentId: ID!) {
-    unlikeComment(id: $commentId) {
-      _id
+  mutation deleteCommentVote($commentId: ID!, $craetorId: ID!) {
+    deleteCommentVote(input: { commentId: $commentId, creatorId: $craetorId }) {
+      id
     }
   }
 `;

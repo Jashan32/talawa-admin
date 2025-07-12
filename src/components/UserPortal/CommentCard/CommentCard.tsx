@@ -70,7 +70,6 @@ function commentCard(props: InterfaceCommentCardProps): JSX.Element {
   const userId = getItem('userId');
 
   // Check if the current user has liked the comment
-  console.log(props);
   const likedByUser = props.likedBy?.some((likedBy) => likedBy.id === userId);
 
   // State to track the number of likes and if the comment is liked by the user
@@ -96,9 +95,10 @@ function commentCard(props: InterfaceCommentCardProps): JSX.Element {
         const { data } = await unlikeComment({
           variables: {
             commentId: props.id,
+            craetorId: userId,
           },
         });
-        if (data && data.unlikeComment && data.unlikeComment.id) {
+        if (data && data.deleteCommentVote && data.deleteCommentVote.id) {
           setLikes((likes) => likes - 1);
           setIsLikedByUser(false);
           props.handleDislikeComment(props.id);
@@ -114,7 +114,7 @@ function commentCard(props: InterfaceCommentCardProps): JSX.Element {
           },
         });
 
-        if (data && data.likeComment && data.likeComment.id) {
+        if (data && data.createCommentVote && data.createCommentVote.id) {
           setLikes((likes) => likes + 1);
           setIsLikedByUser(true);
           props.handleLikeComment(props.id);

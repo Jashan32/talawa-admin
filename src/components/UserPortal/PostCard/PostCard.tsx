@@ -77,7 +77,6 @@ interface InterfaceCommentCardProps {
 export default function postCard(props: InterfacePostCard): JSX.Element {
   const { t } = useTranslation('translation', { keyPrefix: 'postCard' });
   const { t: tCommon } = useTranslation('common');
-  // console.log(props);
   const { getItem } = useLocalStorage();
 
   // Retrieve user ID from local storage
@@ -134,7 +133,6 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
       }
     } else {
       try {
-        // console.log('Unliking post:', props.id);
         const { data } = await likePost({ variables: { postId: props.id } });
 
         if (data) {
@@ -227,7 +225,6 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
           handleLikeComment: handleLikeComment,
           handleDislikeComment: handleDislikeComment,
         };
-        console.log('xyz', comments);
         setComments([...comments, newComment]);
       }
     } catch (error: unknown) {
@@ -391,8 +388,6 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
             <div className={styles.commentContainer}>
               {numComments ? (
                 comments.map((comment, index: number) => {
-                  // console.log(comments);
-                  console.log(comment);
                   const cardProps: InterfaceCommentCardProps = {
                     id: comment.id,
                     creator: {
