@@ -67,7 +67,7 @@ import UserDefault from '../../../assets/images/defaultImg.png';
 interface InterfaceCommentCardProps {
   id: string;
   creator: { id: string; name: string };
-  likeCount: number;
+  upVotesCount: number;
   likedBy: { id: string }[];
   text: string;
   handleLikeComment: (commentId: string) => void;
@@ -77,7 +77,7 @@ interface InterfaceCommentCardProps {
 export default function postCard(props: InterfacePostCard): JSX.Element {
   const { t } = useTranslation('translation', { keyPrefix: 'postCard' });
   const { t: tCommon } = useTranslation('common');
-  console.log(props);
+  // console.log(props);
   const { getItem } = useLocalStorage();
 
   // Retrieve user ID from local storage
@@ -134,7 +134,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
       }
     } else {
       try {
-        console.log('Unliking post:', props.id);
+        // console.log('Unliking post:', props.id);
         const { data } = await likePost({ variables: { postId: props.id } });
 
         if (data) {
@@ -166,7 +166,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
         updatedComment = {
           ...comment,
           likedBy: comment.likedBy.filter((user) => user.id !== userId),
-          likeCount: comment.likeCount - 1,
+          upVotesCount: comment.upVotesCount - 1,
         };
       }
       return updatedComment;
@@ -184,8 +184,11 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
       ) {
         updatedComment = {
           ...comment,
-          likedBy: [...comment.likedBy, { id: userId as string }],
-          likeCount: comment.likeCount + 1,
+          likedBy: [
+            ...comment.likedBy,
+            { id: userId as string, name: postCreator },
+          ],
+          upVotesCount: comment.upVotesCount + 1,
         };
       }
       return updatedComment;
@@ -214,17 +217,17 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
           id: createEventData.createComment.id,
           creator: {
             id: createEventData.createComment.creator._id,
-            firstName: createEventData.createComment.creator.firstName,
-            lastName: createEventData.createComment.creator.lastName,
-            email: createEventData.createComment.creator.email,
+            name: createEventData.createComment.creator.name,
+            // lastName: createEventData.createComment.creator.lastName,
+            // email: createEventData.createComment.creator.email,
           },
-          likeCount: createEventData.createComment.likeCount,
+          upVotesCount: createEventData.createComment.upVotesCount,
           likedBy: createEventData.createComment.likedBy,
           text: createEventData.createComment.text,
           handleLikeComment: handleLikeComment,
           handleDislikeComment: handleDislikeComment,
         };
-
+        console.log('xyz', comments);
         setComments([...comments, newComment]);
       }
     } catch (error: unknown) {
@@ -388,14 +391,15 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
             <div className={styles.commentContainer}>
               {numComments ? (
                 comments.map((comment, index: number) => {
-                  console.log(comments);
+                  // console.log(comments);
+                  console.log(comment);
                   const cardProps: InterfaceCommentCardProps = {
                     id: comment.id,
                     creator: {
                       id: comment.creator.id,
                       name: comment.creator.name,
                     },
-                    likeCount: comment.likeCount,
+                    upVotesCount: comment.upVotesCount,
                     likedBy: comment.likedBy,
                     text: comment.text,
                     handleLikeComment: handleLikeComment,

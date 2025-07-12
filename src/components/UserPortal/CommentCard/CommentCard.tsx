@@ -52,7 +52,7 @@ interface InterfaceCommentCardProps {
     id: string;
     name: string;
   };
-  likeCount: number;
+  upVotesCount: number;
   likedBy: {
     id: string;
   }[];
@@ -70,10 +70,11 @@ function commentCard(props: InterfaceCommentCardProps): JSX.Element {
   const userId = getItem('userId');
 
   // Check if the current user has liked the comment
-  const likedByUser = props.likedBy.some((likedBy) => likedBy.id === userId);
+  console.log(props);
+  const likedByUser = props.likedBy?.some((likedBy) => likedBy.id === userId);
 
   // State to track the number of likes and if the comment is liked by the user
-  const [likes, setLikes] = React.useState(props.likeCount);
+  const [likes, setLikes] = React.useState(props.upVotesCount);
   const [isLikedByUser, setIsLikedByUser] = React.useState(likedByUser);
 
   // Mutation hooks for liking and unliking comments
@@ -97,7 +98,7 @@ function commentCard(props: InterfaceCommentCardProps): JSX.Element {
             commentId: props.id,
           },
         });
-        if (data && data.unlikeComment && data.unlikeComment._id) {
+        if (data && data.unlikeComment && data.unlikeComment.id) {
           setLikes((likes) => likes - 1);
           setIsLikedByUser(false);
           props.handleDislikeComment(props.id);
@@ -113,7 +114,7 @@ function commentCard(props: InterfaceCommentCardProps): JSX.Element {
           },
         });
 
-        if (data && data.likeComment && data.likeComment._id) {
+        if (data && data.likeComment && data.likeComment.id) {
           setLikes((likes) => likes + 1);
           setIsLikedByUser(true);
           props.handleLikeComment(props.id);

@@ -200,16 +200,15 @@ export default function home(): JSX.Element {
         id: value.node?.id || '',
       })) || [];
     const postComments: PostComments = comments?.edges.map((value) => {
-      console.log('value');
       return {
         id: value.node.id,
         creator: {
           name: value.node.creator?.name ?? '',
           id: value.node.creator?.id ?? '',
         },
-        likeCount: value.node.upVotesCount,
+        upVotesCount: value.node.upVotesCount,
         likedBy:
-          value.node.upVoters.edges?.map((like) => ({
+          value.node.upVoters.edges?.map((like: { node: { id: string } }) => ({
             id: like?.node.id ?? '',
           })) ?? [],
         text: value.node.body,

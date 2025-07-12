@@ -9,7 +9,7 @@ export type Post = {
   createdAt: Date;
   creator?: User; // Optional
   imageUrl?: string; // Optional
-  likeCount?: number; // Optional
+  upVotesCount?: number; // Optional
   likedBy?: User[]; // Optional
   organization: Organization;
   pinned?: boolean; // Optional
@@ -89,7 +89,7 @@ export type PostComments = {
     email: string;
   };
 
-  likeCount: number;
+  upVotesCount: number;
   likedBy: {
     id: string;
   }[];
@@ -102,7 +102,7 @@ export type PostLikes = {
 }[];
 
 export type PostNode = {
-  commentCount: number;
+  commentsCount: number;
   createdAt: string;
   creator: {
     name: string;

@@ -202,7 +202,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 1,
+      commentsCount: 1,
       comments: [
         {
           id: '64eb13beca85de60ebe0ed0e',
@@ -273,7 +273,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -319,7 +319,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'test Post',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commencommentsCounttCount: 0,
       comments: [],
       likedBy: [
         {
@@ -373,7 +373,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -420,7 +420,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       captiob: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -470,7 +470,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -519,7 +519,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       text: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -560,7 +560,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -607,7 +607,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -657,7 +657,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       text: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 1,
+      commentsCount: 1,
       postedAt: '',
       comments: [
         {
@@ -740,7 +740,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       text: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 1,
+      commentsCount: 1,
       postedAt: '',
       comments: [
         {
@@ -822,7 +822,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -865,7 +865,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'This is post test text',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -953,7 +953,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'test Post',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -1009,7 +1009,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'test Post',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -1078,7 +1078,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       text: 'test Post',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {
@@ -1144,7 +1144,7 @@ describe('Testing PostCard Component [User Portal]', () => {
       caption: 'test Post',
       title: 'This is post test title',
       upVotesCount: 1,
-      commentCount: 0,
+      commentsCount: 0,
       comments: [],
       likedBy: [
         {

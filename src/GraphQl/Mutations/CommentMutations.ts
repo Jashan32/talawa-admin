@@ -10,19 +10,22 @@ import gql from 'graphql-tag';
 
 export const CREATE_COMMENT_POST = gql`
   mutation createComment($comment: String!, $postId: ID!) {
-    createComment(data: { text: $comment }, postId: $postId) {
-      _id
+    createComment(input: { body: $comment, postId: $postId }) {
+      id
       creator {
-        _id
-        firstName
-        lastName
-        email
+        id
+        name
       }
-      likeCount
-      likedBy {
-        _id
+      upVotesCount
+      upVoters(first: 2) {
+        edges {
+          node {
+            id
+            name
+          }
+        }
       }
-      text
+      body
     }
   }
 `;

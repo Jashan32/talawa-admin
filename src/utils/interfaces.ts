@@ -2118,7 +2118,7 @@ export interface InterfacePostCard {
   caption: string;
   title: string;
   upVotesCount: number;
-  commentCount: number;
+  commentsCount: number;
   likedBy: {
     id: string;
     name: string;
@@ -2129,7 +2129,7 @@ export interface InterfacePostCard {
       id: string;
       name: string;
     };
-    likeCount: number;
+    upVotesCount: number;
     likedBy: {
       id: string;
       name: string;
