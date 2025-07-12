@@ -2113,6 +2113,7 @@ export interface InterfaceCreateFund {
  * @property {boolean} [hasMorePostUpVoters] - Indicates if there are more post upvoters to load (optional).
  */
 export interface InterfacePostCard {
+  index: number;
   id: string;
   creator: {
     name: string;
@@ -2143,15 +2144,17 @@ export interface InterfacePostCard {
     text: string;
   }[];
   fetchPosts: () => void;
-  loadPostComments?: () => Promise<void>;
-  loadMoreComments?: (after?: string) => Promise<void>;
-  loadMorePostUpVoters?: (after?: string) => Promise<void>;
-  loadMoreCommentUpVoters?: (
-    commentId: string,
-    after?: string,
-  ) => Promise<void>;
   hasMoreComments?: boolean;
   hasMorePostUpVoters?: boolean;
+  // Dependencies for PostCard to handle its own loading functions
+  postId: string;
+  setPosts: React.Dispatch<React.SetStateAction<InterfacePostEdge[]>>;
+  posts: InterfacePostEdge[];
+  commentsCursors: Record<string, string>;
+  setCommentsCursors: React.Dispatch<
+    React.SetStateAction<Record<string, string>>
+  >;
+  orgId: string;
 }
 
 /**
@@ -2190,6 +2193,7 @@ export interface InterfacePostCard {
  */
 export interface InterfacePostEdge {
   node: {
+    pinnedAt: string | null;
     upVoters: {
       edges: {
         node: {

@@ -55,20 +55,18 @@
  * - Handling post creation through a modal.
  * - Redirecting to the user page if the organization ID is missing.
  */
-import { useQuery, useLazyQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import SendIcon from '@mui/icons-material/Send';
 import {
   ORGANIZATION_ADVERTISEMENT_LIST,
   ORGANIZATION_POST_LIST,
   USER_DETAILS,
-  GET_POST_WITH_COMMENTS,
 } from 'GraphQl/Queries/Queries';
 import PostCard from 'components/UserPortal/PostCard/PostCard';
 import type {
   InterfacePostEdge,
   InterfacePostCard,
-  InterfaceCommentEdge,
   InterfaceQueryOrganizationAdvertisementListItem,
   InterfaceQueryUserListItem,
 } from 'utils/interfaces';
@@ -164,8 +162,6 @@ export default function home(): JSX.Element {
     },
   });
 
-  // Query hook for fetching comments with pagination
-  const [fetchMoreCommentsQuery] = useLazyQuery(GET_POST_WITH_COMMENTS);
   const user: InterfaceQueryUserListItem | undefined = userData?.user;
 
   // Effect hook to update posts state when data changes
@@ -191,12 +187,12 @@ export default function home(): JSX.Element {
   useEffect(() => {
     setPinnedPosts(
       posts.filter((edge: InterfacePostEdge) => {
-        return edge.node.pinned;
+        return edge.node.pinnedAt != null;
       }),
     );
   }, [posts]);
 
-  const getCardProps = (node: PostNode): InterfacePostCard => {
+  const getCardProps = (node: PostNode, index: number): InterfacePostCard => {
     const {
       creator,
       id,
@@ -242,6 +238,7 @@ export default function home(): JSX.Element {
       day: 'numeric',
     }).format(date);
     const cardProps: InterfacePostCard = {
+      index: index,
       id: id,
       creator: {
         id: creator.id,
@@ -257,11 +254,14 @@ export default function home(): JSX.Element {
       comments: postComments,
       likedBy: allLikes,
       fetchPosts: () => refetch(),
-      loadPostComments: () => loadPostComments(id),
-      loadMoreComments: (after?: string) => loadMoreComments(id, after),
-      loadMorePostUpVoters: (after?: string) => loadMorePostUpVoters(id, after),
       hasMoreComments: comments?.pageInfo?.hasNextPage || false,
       hasMorePostUpVoters: upVoters?.pageInfo?.hasNextPage || false,
+      postId: id,
+      setPosts,
+      posts,
+      commentsCursors,
+      setCommentsCursors,
+      orgId,
     };
 
     return cardProps;
@@ -320,191 +320,6 @@ export default function home(): JSX.Element {
     }
   };
 
-  /**
-   * Loads comments for a specific post when the post is opened.
-   */
-  const loadPostComments = async (postId: string): Promise<void> => {
-    try {
-      const { data: commentsData } = await fetchMoreCommentsQuery({
-        variables: {
-          input: { id: postId },
-          first: 10, // Load first 10 comments
-        },
-      });
-
-      if (!commentsData?.post) return;
-
-      // Update the posts state with the loaded comments
-      setPosts((prevPosts) =>
-        prevPosts.map((edge: InterfacePostEdge) => {
-          if (edge.node.id !== postId) return edge;
-
-          return {
-            ...edge,
-            node: {
-              ...edge.node,
-              comments: {
-                edges: commentsData.post.comments.edges,
-                pageInfo: commentsData.post.comments.pageInfo,
-              },
-              commentsCount: commentsData.post.commentsCount,
-            },
-          } as InterfacePostEdge;
-        }),
-      );
-
-      // Set the initial cursor for this post
-      if (commentsData.post.comments.pageInfo.endCursor) {
-        setCommentsCursors((prev) => ({
-          ...prev,
-          [postId]: commentsData.post.comments.pageInfo.endCursor,
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading post comments:', error);
-    }
-  };
-
-  /**
-   * Loads more comments for a specific post using pagination.
-   */
-  const loadMoreComments = async (
-    postId: string,
-    after?: string,
-  ): Promise<void> => {
-    try {
-      // Check if this is the first time loading comments for this post
-      const currentPost = posts.find((edge) => edge.node.id === postId);
-      const hasExistingComments =
-        (currentPost?.node.comments?.edges?.length || 0) > 0;
-
-      if (!hasExistingComments && !after) {
-        await loadPostComments(postId);
-        return;
-      }
-
-      // Use the provided after cursor or get the last cursor for this post
-      const cursor = after || commentsCursors[postId];
-      const { data: commentsData } = await fetchMoreCommentsQuery({
-        variables: {
-          input: { id: postId },
-          first: 10,
-          after: cursor,
-        },
-      });
-
-      if (!commentsData?.post) return;
-      // Update the posts state with new comments
-      setPosts((prevPosts) =>
-        prevPosts.map((edge: InterfacePostEdge) => {
-          if (edge.node.id !== postId) return edge;
-
-          const newComments: InterfaceCommentEdge[] =
-            commentsData.post.comments.edges;
-          const existingComments = edge.node.comments?.edges || [];
-
-          // Merge existing and new comments, avoiding duplicates
-          const mergedComments = [
-            ...existingComments,
-            ...newComments.filter(
-              (newComment: InterfaceCommentEdge) =>
-                !existingComments.some(
-                  (existingComment: InterfaceCommentEdge) =>
-                    existingComment.node.id === newComment.node.id,
-                ),
-            ),
-          ];
-          return {
-            ...edge,
-            node: {
-              ...edge.node,
-              comments: {
-                edges: mergedComments,
-                pageInfo: commentsData.post.comments.pageInfo,
-              },
-              commentsCount: commentsData.post.commentsCount,
-            },
-          } as InterfacePostEdge;
-        }),
-      );
-
-      // Update the cursor for this post
-      if (commentsData.post.comments.pageInfo.endCursor) {
-        setCommentsCursors((prev) => ({
-          ...prev,
-          [postId]: commentsData.post.comments.pageInfo.endCursor,
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading more comments:', error);
-    }
-  };
-
-  /**
-   * Loads more upVoters for a specific post using pagination.
-   */
-  const loadMorePostUpVoters = async (
-    postId: string,
-    after?: string,
-  ): Promise<void> => {
-    try {
-      await fetchMore({
-        variables: {
-          input: { id: orgId as string },
-          first: 10,
-          postUpVotersFirst: 5,
-          postUpVotersAfter: after,
-        },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-
-          const updatedPosts = prev.organization.posts.edges.map(
-            (edge: InterfacePostEdge) => {
-              if (edge.node.id !== postId) return edge;
-
-              // Find the updated post data
-              const updatedPost = fetchMoreResult.organization.posts.edges.find(
-                (newEdge: InterfacePostEdge) => newEdge.node.id === postId,
-              );
-
-              if (!updatedPost) return edge;
-
-              // Merge existing and new upVoters
-              const mergedUpVoters = [
-                ...edge.node.upVoters.edges,
-                ...updatedPost.node.upVoters.edges,
-              ];
-
-              return {
-                ...edge,
-                node: {
-                  ...edge.node,
-                  upVoters: {
-                    ...edge.node.upVoters,
-                    edges: mergedUpVoters,
-                    pageInfo: updatedPost.node.upVoters.pageInfo,
-                  },
-                },
-              };
-            },
-          );
-
-          return {
-            organization: {
-              ...prev.organization,
-              posts: {
-                ...prev.organization.posts,
-                edges: updatedPosts,
-              },
-            },
-          };
-        },
-      });
-    } catch (error) {
-      console.error('Error loading more post upVoters:', error);
-    }
-  };
-
   return (
     <>
       <div className={`d-flex flex-row ${styles.containerHeightUserPost}`}>
@@ -555,8 +370,11 @@ export default function home(): JSX.Element {
             <h2>{t('feed')}</h2>
             {pinnedPosts.length > 0 && (
               <Carousel responsive={responsive}>
-                {pinnedPosts.map((edge: InterfacePostEdge) => {
-                  const cardProps = getCardProps(edge.node as PostNode);
+                {pinnedPosts.map((edge: InterfacePostEdge, index) => {
+                  const cardProps = getCardProps(
+                    edge.node as PostNode,
+                    index as number,
+                  );
                   return <PostCard key={edge.node.id} {...cardProps} />;
                 })}
               </Carousel>
@@ -587,8 +405,11 @@ export default function home(): JSX.Element {
                 {posts.length > 0 ? (
                   <>
                     <Row className="my-2">
-                      {posts.map((edge: InterfacePostEdge) => {
-                        const cardProps = getCardProps(edge.node as PostNode);
+                      {posts.map((edge: InterfacePostEdge, index) => {
+                        const cardProps = getCardProps(
+                          edge.node as PostNode,
+                          index as number,
+                        );
                         return <PostCard key={edge.node.id} {...cardProps} />;
                       })}
                     </Row>

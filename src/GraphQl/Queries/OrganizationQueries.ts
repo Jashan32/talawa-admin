@@ -85,6 +85,7 @@ export const ORGANIZATION_POST_LIST = gql`
             id
             caption
             pinnedAt
+            pinnedAt
             creator {
               name
               id

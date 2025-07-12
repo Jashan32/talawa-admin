@@ -12,7 +12,6 @@
  * @param props.likedBy - An array of users who have liked the comment.
  * @param props.text - The text content of the comment.
  * @param props.handleLikeComment - Callback function triggered when the comment is liked.
- * @param props.handleDislikeComment - Callback function triggered when the comment is unliked.
  *
  * @returns A JSX element representing the comment card.
  *
@@ -30,7 +29,6 @@
  *   likedBy={[{ id: "user2" }]}
  *   text="This is a sample comment."
  *   handleLikeComment={(id) => console.log(`Liked comment with ID: ${id}`)}
- *   handleDislikeComment={(id) => console.log(`Disliked comment with ID: ${id}`)}
  * />
  * ```
  */
@@ -58,7 +56,6 @@ interface InterfaceCommentCardProps {
   }[];
   text: string;
   handleLikeComment: (commentId: string) => void;
-  handleDislikeComment: (commentId: string) => void;
 }
 
 function commentCard(props: InterfaceCommentCardProps): JSX.Element {
@@ -101,7 +98,6 @@ function commentCard(props: InterfaceCommentCardProps): JSX.Element {
         if (data && data.deleteCommentVote && data.deleteCommentVote.id) {
           setLikes((likes) => likes - 1);
           setIsLikedByUser(false);
-          props.handleDislikeComment(props.id);
         }
       } catch (error: unknown) {
         toast.error(error as string);

@@ -27,7 +27,7 @@
  * - Displays error messages and success notifications using `react-toastify`.
  */
 import React from 'react';
-import { useMutation } from '@apollo/client';
+import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import {
@@ -50,7 +50,11 @@ import CommentIcon from '@mui/icons-material/Comment';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
-import type { InterfacePostCard } from 'utils/interfaces';
+import type {
+  InterfacePostCard,
+  InterfacePostEdge,
+  InterfaceCommentEdge,
+} from 'utils/interfaces';
 import {
   CREATE_COMMENT_POST,
   DELETE_POST_MUTATION,
@@ -63,7 +67,10 @@ import { errorHandler } from 'utils/errorHandler';
 import useLocalStorage from 'utils/useLocalstorage';
 import styles from '../../../style/app-fixed.module.css';
 import UserDefault from '../../../assets/images/defaultImg.png';
-
+import {
+  GET_POST_WITH_COMMENTS,
+  ORGANIZATION_POST_LIST,
+} from 'GraphQl/Queries/OrganizationQueries';
 interface InterfaceCommentCardProps {
   id: string;
   creator: { id: string; name: string };
@@ -71,10 +78,16 @@ interface InterfaceCommentCardProps {
   likedBy: { id: string; name: string }[];
   text: string;
   handleLikeComment: (commentId: string) => void;
-  handleDislikeComment: (commentId: string) => void;
+}
+
+interface InterfaceQuery {
+  organization: {
+    posts: { edges: InterfacePostEdge[] };
+  };
 }
 
 export default function postCard(props: InterfacePostCard): JSX.Element {
+  const [fetchMoreCommentsQuery] = useLazyQuery(GET_POST_WITH_COMMENTS);
   const { t } = useTranslation('translation', { keyPrefix: 'postCard' });
   const { t: tCommon } = useTranslation('common');
   const { getItem } = useLocalStorage();
@@ -95,8 +108,6 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
   const [viewPost, setViewPost] = React.useState(false);
   const [showEditPost, setShowEditPost] = React.useState(false);
   const [postContent, setPostContent] = React.useState<string>(props.caption);
-
-  // Post creator's full name
   const postCreator = `${props.creator.name}`;
 
   // GraphQL mutations
@@ -106,34 +117,230 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
     useMutation(CREATE_COMMENT_POST);
   const [editPost] = useMutation(UPDATE_POST_MUTATION);
   const [deletePost] = useMutation(DELETE_POST_MUTATION);
+  const orgId = getItem('orgId');
+  const { fetchMore } = useQuery(ORGANIZATION_POST_LIST, {
+    variables: {
+      input: { id: orgId as string },
+      first: 10,
+      postUpVotersFirst: 5,
+    },
+  });
 
-  // Toggle the view post modal and load comments on-demand
-  const toggleViewPost = async (): Promise<void> => {
-    if (!viewPost && !commentsLoaded && props.loadPostComments) {
-      // Opening modal and comments not loaded yet - load them
-      setLoadingComments(true);
-      try {
-        await props.loadPostComments();
-        setCommentsLoaded(true);
-      } catch (error) {
-        console.error('Error loading comments:', error);
-        toast.error(t('errorLoadingComments') || 'Error loading comments');
-      } finally {
-        setLoadingComments(false);
+  const loadPostComments = async (): Promise<void> => {
+    try {
+      const { data: commentsData } = await fetchMoreCommentsQuery({
+        variables: {
+          input: { id: props.postId },
+          first: 10, // Load first 10 comments
+        },
+      });
+
+      if (!commentsData?.post) return;
+
+      // Update the posts state with the loaded comments
+      props.setPosts((prevPosts) =>
+        prevPosts.map((edge: InterfacePostEdge) => {
+          if (edge.node.id !== props.postId) return edge;
+
+          return {
+            ...edge,
+            node: {
+              ...edge.node,
+              comments: {
+                edges: commentsData.post.comments.edges,
+                pageInfo: commentsData.post.comments.pageInfo,
+              },
+              commentsCount: commentsData.post.commentsCount,
+            },
+          } as InterfacePostEdge;
+        }),
+      );
+
+      // Set the initial cursor for this post
+      if (commentsData.post.comments.pageInfo.endCursor) {
+        props.setCommentsCursors((prev) => ({
+          ...prev,
+          [props.postId]: commentsData.post.comments.pageInfo.endCursor,
+        }));
       }
+    } catch (error) {
+      console.error('Error loading post comments:', error);
+    }
+  };
+
+  const loadMoreComments = async (after?: string): Promise<void> => {
+    try {
+      // Check if this is the first time loading comments for this post
+      const currentPost = props.posts.find(
+        (edge) => edge.node.id === props.postId,
+      );
+      const hasExistingComments =
+        (currentPost?.node.comments?.edges?.length || 0) > 0;
+
+      if (!hasExistingComments && !after) {
+        await loadPostComments();
+        return;
+      }
+
+      // Use the provided after cursor or get the last cursor for this post
+      const cursor = after || props.commentsCursors[props.postId];
+      const { data: commentsData } = await fetchMoreCommentsQuery({
+        variables: {
+          input: { id: props.postId },
+          first: 10,
+          after: cursor,
+        },
+      });
+
+      if (!commentsData?.post) return;
+      // Update the posts state with new comments
+      props.setPosts((prevPosts) =>
+        prevPosts.map((edge: InterfacePostEdge) => {
+          if (edge.node.id !== props.postId) return edge;
+
+          const newComments: InterfaceCommentEdge[] =
+            commentsData.post.comments.edges;
+          const existingComments = edge.node.comments?.edges || [];
+
+          // Merge existing and new comments, avoiding duplicates
+          const mergedComments = [
+            ...existingComments,
+            ...newComments.filter(
+              (newComment: InterfaceCommentEdge) =>
+                !existingComments.some(
+                  (existingComment: InterfaceCommentEdge) =>
+                    existingComment.node.id === newComment.node.id,
+                ),
+            ),
+          ];
+          return {
+            ...edge,
+            node: {
+              ...edge.node,
+              comments: {
+                edges: mergedComments,
+                pageInfo: commentsData.post.comments.pageInfo,
+              },
+              commentsCount: commentsData.post.commentsCount,
+            },
+          } as InterfacePostEdge;
+        }),
+      );
+
+      // Update the cursor for this post
+      if (commentsData.post.comments.pageInfo.endCursor) {
+        props.setCommentsCursors((prev) => ({
+          ...prev,
+          [props.postId]: commentsData.post.comments.pageInfo.endCursor,
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading more comments:', error);
+    }
+  };
+
+  const loadMorePostUpVoters = async (after?: string): Promise<void> => {
+    try {
+      const { data } = await fetchMore({
+        variables: {
+          input: { id: props.orgId as string },
+          first: 10,
+          postUpVotersFirst: 5,
+          postUpVotersAfter: after,
+        },
+        updateQuery: (
+          prev: InterfaceQuery,
+          { fetchMoreResult }: { fetchMoreResult: InterfaceQuery },
+        ) => {
+          if (!fetchMoreResult) return prev;
+          const updatedPosts = prev.organization.posts.edges.map(
+            (edge: InterfacePostEdge) => {
+              if (edge.node.id !== props.postId) return edge;
+
+              // Find the updated post data
+              const updatedPost = fetchMoreResult.organization.posts.edges.find(
+                (newEdge: InterfacePostEdge) =>
+                  newEdge.node.id === props.postId,
+              );
+
+              if (!updatedPost) return edge;
+
+              // Merge existing and new upVoters, avoiding duplicates
+              const existingUpVoters = edge.node.upVoters.edges;
+              const newUpVoters = updatedPost.node.upVoters.edges;
+
+              const mergedUpVoters = [
+                ...existingUpVoters,
+                ...newUpVoters.filter(
+                  (newUpVoter: { node: { id: string; name: string } }) =>
+                    !existingUpVoters.some(
+                      (existingUpVoter: {
+                        node: { id: string; name: string };
+                      }) => existingUpVoter.node.id === newUpVoter.node.id,
+                    ),
+                ),
+              ];
+
+              return {
+                ...edge,
+                node: {
+                  ...edge.node,
+                  upVoters: {
+                    ...edge.node.upVoters,
+                    edges: mergedUpVoters,
+                    pageInfo: updatedPost.node.upVoters.pageInfo,
+                  },
+                  upVotesCount: updatedPost.node.upVotesCount,
+                },
+              };
+            },
+          );
+
+          return {
+            organization: {
+              ...prev.organization,
+              posts: {
+                ...prev.organization.posts,
+                edges: updatedPosts,
+              },
+            },
+          };
+        },
+      });
+      if (data?.organization?.posts?.edges) {
+        const currentPost = data.organization.posts.edges.find(
+          (edge: InterfacePostEdge) => edge.node.id === props.postId,
+        );
+        if (currentPost) {
+          const allUpVoters = currentPost.node.upVoters.edges;
+          const userHasLiked = allUpVoters.some(
+            (upVoter: { node: { id: string; name: string } }) =>
+              upVoter.node.id === userId,
+          );
+          setIsLikedByUser(userHasLiked);
+          setLikes(currentPost.node.upVotesCount || 0);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading more post upVoters:', error);
+    }
+  };
+  const toggleViewPost = async (): Promise<void> => {
+    if (!viewPost && !commentsLoaded) {
+      setLoadingComments(true);
+      await loadPostComments();
+      setCommentsLoaded(true);
+      setLoadingComments(false);
+      await loadMorePostUpVoters();
     }
     setViewPost(!viewPost);
   };
 
-  // Toggle the edit post modal
   const toggleEditPost = (): void => setShowEditPost(!showEditPost);
-
-  // Handle input changes for the post content
   const handlePostInput = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setPostContent(e.target.value);
   };
 
-  // Toggle like or unlike the post
   const handleToggleLike = async (): Promise<void> => {
     if (isLikedByUser) {
       try {
@@ -168,25 +375,6 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
   ): void => {
     const comment = event.target.value;
     setCommentInput(comment);
-  };
-
-  // Dislike a comment
-  const handleDislikeComment = (commentId: string): void => {
-    const updatedComments = comments.map((comment) => {
-      let updatedComment = { ...comment };
-      if (
-        comment.id === commentId &&
-        comment.likedBy.some((user) => user.id === userId)
-      ) {
-        updatedComment = {
-          ...comment,
-          likedBy: comment.likedBy.filter((user) => user.id !== userId),
-          upVotesCount: comment.upVotesCount - 1,
-        };
-      }
-      return updatedComment;
-    });
-    setComments(updatedComments);
   };
 
   // Like a comment
@@ -243,30 +431,14 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
           ),
           text: createEventData.createComment.body,
           handleLikeComment: handleLikeComment,
-          handleDislikeComment: handleDislikeComment,
         };
         setComments([...comments, newComment]);
       }
     } catch (error: unknown) {
-      // Handle errors
-      // Log error with context for debugging
       console.error('Error creating comment:', error);
-
-      // Show user-friendly translated message based on error type
-      if (error instanceof Error) {
-        const isValidationError = error.message.includes(
-          'Comment validation failed',
-        );
-        toast.error(
-          isValidationError ? t('emptyCommentError') : t('unexpectedError'),
-        );
-      } else {
-        toast.error(t('unexpectedError'));
-      }
     }
   };
 
-  // Edit the post
   const handleEditPost = async (): Promise<void> => {
     try {
       const { data: createEventData } = await editPost({
@@ -274,7 +446,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
       });
 
       if (createEventData) {
-        props.fetchPosts(); // Refresh the posts
+        props.fetchPosts();
         toggleEditPost();
         toast.success(
           tCommon('updatedSuccessfully', { item: 'Post' }) as string,
@@ -285,7 +457,6 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
     }
   };
 
-  // Delete the post
   const handleDeletePost = async (): Promise<void> => {
     try {
       const { data: createEventData } = await deletePost({
@@ -293,7 +464,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
       });
 
       if (createEventData) {
-        props.fetchPosts(); // Refresh the posts
+        props.fetchPosts();
         toast.success('Successfully deleted the Post.');
       }
     } catch (error: unknown) {
@@ -301,20 +472,28 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
     }
   };
 
-  // Update comments when props change (for pagination and initial load)
   React.useEffect(() => {
     setComments(props.comments);
-    // If comments are provided in props, mark them as loaded
     if (props.comments.length > 0) {
       setCommentsLoaded(true);
     }
   }, [props.comments]);
 
+  React.useEffect(() => {
+    setLikes(props.upVotesCount);
+    const userLiked = props.likedBy.some((likedBy) => likedBy.id === userId);
+    setIsLikedByUser(userLiked);
+  }, [props.upVotesCount, props.likedBy, userId]);
+
   return (
-    <Col key={props.id} className="d-flex justify-content-center my-2">
+    <Col
+      key={props.id}
+      className="d-flex justify-content-center my-2"
+      data-testid="postCardContainer"
+    >
       <Card className={`${styles.cardStyles}`}>
         <Card.Header className={`${styles.cardHeaderPostCard}`}>
-          <div className={`${styles.creator}`}>
+          <div data-testid={'creator'} className={`${styles.creator}`}>
             <AccountCircleIcon className="my-2" />
             <p>{postCreator}</p>
           </div>
@@ -359,7 +538,10 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
           }
         />
         <Card.Body className="pb-0">
-          <Card.Title className={`${styles.cardTitlePostCard}`}>
+          <Card.Title
+            datatest-id={'postTitle'}
+            className={`${styles.cardTitlePostCard}`}
+          >
             {props.title}
           </Card.Title>
           <Card.Subtitle style={{ color: '#808080' }}>
@@ -374,7 +556,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
             <Button
               size="sm"
               className={`px-4 ${styles.addButton}`}
-              data-testid={'viewPostBtn'}
+              data-testid={'viewPostBtn' + `${props.index}`}
               onClick={toggleViewPost}
             >
               {t('viewPost')}
@@ -413,7 +595,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
               </p>
               <p>{props.caption}</p>
             </div>
-            <h4>Comments</h4>
+            <h4 datatest-id="commentid">Comments</h4>
             <div className={styles.commentContainer}>
               {loadingComments ? (
                 <div className="d-flex justify-content-center p-3">
@@ -432,7 +614,6 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
                     likedBy: comment.likedBy,
                     text: comment.text,
                     handleLikeComment: handleLikeComment,
-                    handleDislikeComment: handleDislikeComment,
                   };
                   return <CommentCard key={index} {...cardProps} />;
                 })
@@ -444,7 +625,7 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
                   <Button
                     variant="outline-primary"
                     size="sm"
-                    onClick={() => props.loadMoreComments?.()}
+                    onClick={() => loadMoreComments()}
                     data-testid="loadMoreCommentsBtn"
                   >
                     Load More Comments

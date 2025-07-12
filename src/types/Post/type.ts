@@ -100,6 +100,7 @@ export type PostLikes = {
 }[];
 
 export type PostNode = {
+  pinnedAt: string | null;
   commentsCount: number;
   createdAt: string;
   creator: {
