@@ -84,14 +84,12 @@ export type PostComments = {
   id: string;
   creator: {
     id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
+    name: string;
   };
-
   upVotesCount: number;
   likedBy: {
     id: string;
+    name: string;
   }[];
   text: string;
 }[];
@@ -117,12 +115,50 @@ export type PostNode = {
         name: string;
       };
     }[];
+    pageInfo: {
+      startCursor: string;
+      endCursor: string;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
+    };
   };
   pinned: boolean;
   caption: string;
   title: string;
   videoUrl: string | null;
   id: string;
-  comments: PostComments;
+  comments: {
+    edges: {
+      node: {
+        id: string;
+        upVotesCount: number;
+        body: string;
+        upVoters: {
+          edges: {
+            node: {
+              id: string;
+              name: string;
+            };
+          }[];
+          pageInfo: {
+            startCursor: string;
+            endCursor: string;
+            hasNextPage: boolean;
+            hasPreviousPage: boolean;
+          };
+        };
+        creator: {
+          name: string;
+          id: string;
+        };
+      };
+    }[];
+    pageInfo: {
+      startCursor: string;
+      endCursor: string;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
+    };
+  };
   likes: PostLikes;
 };

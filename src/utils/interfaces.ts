@@ -2137,6 +2137,144 @@ export interface InterfacePostCard {
     text: string;
   }[];
   fetchPosts: () => void;
+  loadMoreComments?: (after?: string) => Promise<void>;
+  loadMorePostUpVoters?: (after?: string) => Promise<void>;
+  loadMoreCommentUpVoters?: (
+    commentId: string,
+    after?: string,
+  ) => Promise<void>;
+  hasMoreComments?: boolean;
+  hasMorePostUpVoters?: boolean;
+}
+
+/**
+ * @interface InterfacePostEdge
+ * @description Defines the structure for a post edge in GraphQL connections, representing posts with their associated data.
+ * @property {object} node - The post node containing all post data.
+ * @property {object} node.upVoters - The upVoters connection for the post.
+ * @property {object[]} node.upVoters.edges - An array of edges containing upVoter nodes.
+ * @property {object} node.upVoters.edges.node - The upVoter node.
+ * @property {string} node.upVoters.edges.node.id - The unique identifier of the upVoter.
+ * @property {string} node.upVoters.edges.node.name - The name of the upVoter.
+ * @property {object} node.upVoters.pageInfo - Pagination information for upVoters.
+ * @property {string} node.upVoters.pageInfo.startCursor - The cursor for the first upVoter in the current page.
+ * @property {string} node.upVoters.pageInfo.endCursor - The cursor for the last upVoter in the current page.
+ * @property {boolean} node.upVoters.pageInfo.hasNextPage - Indicates if there is a next page of upVoters.
+ * @property {boolean} node.upVoters.pageInfo.hasPreviousPage - Indicates if there is a previous page of upVoters.
+ * @property {string} node.id - The unique identifier of the post.
+ * @property {object} node.comments - The comments connection for the post.
+ * @property {InterfaceCommentEdge[]} node.comments.edges - An array of comment edges.
+ * @property {object} [node.comments.pageInfo] - Pagination information for comments (optional).
+ * @property {string} node.comments.pageInfo.startCursor - The cursor for the first comment in the current page.
+ * @property {string} node.comments.pageInfo.endCursor - The cursor for the last comment in the current page.
+ * @property {boolean} node.comments.pageInfo.hasNextPage - Indicates if there is a next page of comments.
+ * @property {boolean} node.comments.pageInfo.hasPreviousPage - Indicates if there is a previous page of comments.
+ * @property {object} node.creator - The creator of the post.
+ * @property {string} node.creator.id - The unique identifier of the post creator.
+ * @property {string} node.creator.name - The name of the post creator.
+ * @property {boolean} [node.pinned] - Indicates if the post is pinned (optional).
+ * @property {number} [node.commentsCount] - The total number of comments on the post (optional).
+ * @property {string} [node.createdAt] - The creation date and time of the post (optional).
+ * @property {string|null} [node.imageUrl] - The URL of the post's image, or null if no image (optional).
+ * @property {number} [node.upVotesCount] - The total number of upvotes on the post (optional).
+ * @property {string} [node.title] - The title of the post (optional).
+ * @property {string} [node.caption] - The caption/description of the post (optional).
+ * @property {string|null} [node.videoUrl] - The URL of the post's video, or null if no video (optional).
+ */
+export interface InterfacePostEdge {
+  node: {
+    upVoters: {
+      edges: {
+        node: {
+          id: string;
+          name: string;
+        };
+      }[];
+      pageInfo: {
+        startCursor: string;
+        endCursor: string;
+        hasNextPage: boolean;
+        hasPreviousPage: boolean;
+      };
+    };
+    id: string;
+    comments: {
+      edges: InterfaceCommentEdge[];
+      pageInfo?: {
+        startCursor: string;
+        endCursor: string;
+        hasNextPage: boolean;
+        hasPreviousPage: boolean;
+      };
+    };
+    creator: {
+      id: string;
+      name: string;
+    };
+    pinned?: boolean;
+    commentsCount?: number;
+    createdAt?: string;
+    imageUrl?: string | null;
+    upVotesCount?: number;
+    title?: string;
+    caption?: string;
+    videoUrl?: string | null;
+  };
+}
+
+/**
+ * @interface InterfaceCommentEdge
+ * @description Defines the structure for a comment edge in GraphQL connections, representing comments with their associated data. This interface combines properties from both comment pagination queries and organization post list queries.
+ * @property {string} [cursor] - The cursor for this comment edge, used for pagination (optional).
+ * @property {object} node - The comment node containing all comment data.
+ * @property {string} node.id - The unique identifier of the comment.
+ * @property {string} node.body - The text content of the comment.
+ * @property {string} [node.createdAt] - The creation date and time of the comment (optional).
+ * @property {number} node.upVotesCount - The total number of upvotes on the comment.
+ * @property {number} [node.downVotesCount] - The total number of downvotes on the comment (optional).
+ * @property {object} node.creator - The creator of the comment.
+ * @property {string} node.creator.id - The unique identifier of the comment creator.
+ * @property {string} node.creator.name - The name of the comment creator.
+ * @property {string} [node.creator.avatarURL] - The URL of the creator's avatar image (optional).
+ * @property {object} node.upVoters - The upVoters connection for the comment.
+ * @property {object[]} node.upVoters.edges - An array of edges containing upVoter nodes.
+ * @property {object} node.upVoters.edges.node - The upVoter node.
+ * @property {string} node.upVoters.edges.node.id - The unique identifier of the upVoter.
+ * @property {string} node.upVoters.edges.node.name - The name of the upVoter.
+ * @property {object} [node.upVoters.pageInfo] - Pagination information for comment upVoters (optional).
+ * @property {string} node.upVoters.pageInfo.startCursor - The cursor for the first upVoter in the current page.
+ * @property {string} node.upVoters.pageInfo.endCursor - The cursor for the last upVoter in the current page.
+ * @property {boolean} node.upVoters.pageInfo.hasNextPage - Indicates if there is a next page of upVoters.
+ * @property {boolean} node.upVoters.pageInfo.hasPreviousPage - Indicates if there is a previous page of upVoters.
+ */
+export interface InterfaceCommentEdge {
+  cursor?: string;
+  node: {
+    id: string;
+    body: string;
+    createdAt?: string;
+    upVotesCount: number;
+    downVotesCount?: number;
+    creator: {
+      id: string;
+      name: string;
+      avatarURL?: string;
+    };
+    upVoters: {
+      edges: {
+        node: {
+          id: string;
+          name: string;
+        };
+      }[];
+      pageInfo?: {
+        startCursor: string;
+        endCursor: string;
+        hasNextPage: boolean;
+        hasPreviousPage: boolean;
+      };
+    };
+  };
 }
 
 /**

@@ -68,7 +68,7 @@ interface InterfaceCommentCardProps {
   id: string;
   creator: { id: string; name: string };
   upVotesCount: number;
-  likedBy: { id: string }[];
+  likedBy: { id: string; name: string }[];
   text: string;
   handleLikeComment: (commentId: string) => void;
   handleDislikeComment: (commentId: string) => void;
@@ -210,18 +210,21 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
       if (createEventData) {
         setCommentInput('');
         setNumComments((numComments) => numComments + 1);
-
+        console.log(createEventData.createComment);
         const newComment: InterfaceCommentCardProps = {
           id: createEventData.createComment.id,
           creator: {
             id: createEventData.createComment.creator._id,
             name: createEventData.createComment.creator.name,
-            // lastName: createEventData.createComment.creator.lastName,
-            // email: createEventData.createComment.creator.email,
           },
           upVotesCount: createEventData.createComment.upVotesCount,
-          likedBy: createEventData.createComment.likedBy,
-          text: createEventData.createComment.text,
+          likedBy: createEventData.createComment.upVoters.edges.map(
+            (user: { id: string; name: string }) => ({
+              id: user.id,
+              name: user.name,
+            }),
+          ),
+          text: createEventData.createComment.body,
           handleLikeComment: handleLikeComment,
           handleDislikeComment: handleDislikeComment,
         };
@@ -280,6 +283,11 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
       errorHandler(t, error);
     }
   };
+
+  // Update comments when props change (for pagination)
+  React.useEffect(() => {
+    setComments(props.comments);
+  }, [props.comments]);
 
   return (
     <Col key={props.id} className="d-flex justify-content-center my-2">
@@ -404,6 +412,18 @@ export default function postCard(props: InterfacePostCard): JSX.Element {
                 })
               ) : (
                 <p>No comments to show.</p>
+              )}
+              {props.hasMoreComments && (
+                <div className="d-flex justify-content-center mt-3">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => props.loadMoreComments?.()}
+                    data-testid="loadMoreCommentsBtn"
+                  >
+                    Load More Comments
+                  </Button>
+                </div>
               )}
             </div>
             <div className={styles.modalFooter}>

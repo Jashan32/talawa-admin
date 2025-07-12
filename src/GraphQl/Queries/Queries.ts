@@ -1119,7 +1119,10 @@ export {
 } from './PlugInQueries';
 
 // display posts
-export { ORGANIZATION_POST_LIST } from './OrganizationQueries';
+export {
+  ORGANIZATION_POST_LIST,
+  GET_POST_WITH_COMMENTS,
+} from './OrganizationQueries';
 
 export { ORGANIZATION_ADVERTISEMENT_LIST } from './AdvertisementQueries';
 

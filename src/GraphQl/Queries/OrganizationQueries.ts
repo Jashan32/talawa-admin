@@ -13,6 +13,57 @@ import gql from 'graphql-tag';
  * @returns The list of organizations based on the applied filters.
  */
 
+export const GET_POST_WITH_COMMENTS = gql`
+  query getPostWithComments(
+    $input: QueryPostInput!
+    $first: Int
+    $after: String
+  ) {
+    post(input: $input) {
+      id
+      caption
+      createdAt
+      creator {
+        id
+        name
+        avatarURL
+      }
+      comments(first: $first, after: $after) {
+        edges {
+          cursor
+          node {
+            id
+            body
+            createdAt
+            upVotesCount
+            downVotesCount
+            creator {
+              id
+              name
+              avatarURL
+            }
+            upVoters(first: 10) {
+              edges {
+                node {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
+      }
+      commentsCount
+    }
+  }
+`;
+
 export const ORGANIZATION_POST_LIST = gql`
   query OrganizationPostList(
     $input: QueryOrganizationInput!
@@ -20,6 +71,18 @@ export const ORGANIZATION_POST_LIST = gql`
     $before: String
     $first: Int
     $last: Int
+    $commentsFirst: Int
+    $commentsAfter: String
+    $commentsBefore: String
+    $commentsLast: Int
+    $commentUpVotersFirst: Int
+    $commentUpVotersAfter: String
+    $commentUpVotersBefore: String
+    $commentUpVotersLast: Int
+    $postUpVotersFirst: Int
+    $postUpVotersAfter: String
+    $postUpVotersBefore: String
+    $postUpVotersLast: Int
   ) {
     organization(input: $input) {
       id
@@ -27,18 +90,34 @@ export const ORGANIZATION_POST_LIST = gql`
         edges {
           node {
             commentsCount
-            comments(first: 1) {
+            comments(
+              first: $commentsFirst
+              after: $commentsAfter
+              before: $commentsBefore
+              last: $commentsLast
+            ) {
               edges {
                 node {
                   id
                   upVotesCount
                   body
-                  upVoters(first: 1) {
+                  upVoters(
+                    first: $commentUpVotersFirst
+                    after: $commentUpVotersAfter
+                    before: $commentUpVotersBefore
+                    last: $commentUpVotersLast
+                  ) {
                     edges {
                       node {
                         id
                         name
                       }
+                    }
+                    pageInfo {
+                      startCursor
+                      endCursor
+                      hasNextPage
+                      hasPreviousPage
                     }
                   }
                   creator {
@@ -46,6 +125,12 @@ export const ORGANIZATION_POST_LIST = gql`
                     id
                   }
                 }
+              }
+              pageInfo {
+                startCursor
+                endCursor
+                hasNextPage
+                hasPreviousPage
               }
             }
             id
@@ -57,12 +142,23 @@ export const ORGANIZATION_POST_LIST = gql`
             createdAt
             downVotesCount
             upVotesCount
-            upVoters(first: 10) {
+            upVoters(
+              first: $postUpVotersFirst
+              after: $postUpVotersAfter
+              before: $postUpVotersBefore
+              last: $postUpVotersLast
+            ) {
               edges {
                 node {
                   id
                   name
                 }
+              }
+              pageInfo {
+                startCursor
+                endCursor
+                hasNextPage
+                hasPreviousPage
               }
             }
           }
