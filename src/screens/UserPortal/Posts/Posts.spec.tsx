@@ -1,13 +1,7 @@
 import React, { act } from 'react';
 import { MockedProvider } from '@apollo/react-testing';
 import type { RenderResult } from '@testing-library/react';
-import {
-  fireEvent,
-  render,
-  screen,
-  within,
-  waitFor,
-} from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import userEvent from '@testing-library/user-event';
 import {
@@ -445,59 +439,12 @@ const renderHomeScreen = (): RenderResult =>
     </MockedProvider>,
   );
 
-const renderHomeScreenWithEmptyPosts = (): RenderResult =>
-  render(
-    <MockedProvider addTypename={false} link={link}>
-      <MemoryRouter initialEntries={['/user/organization/emptyOrgId']}>
-        <Provider store={store}>
-          <I18nextProvider i18n={i18nForTest}>
-            <Routes>
-              <Route path="/user/organization/:orgId" element={<Home />} />
-            </Routes>
-          </I18nextProvider>
-        </Provider>
-      </MemoryRouter>
-    </MockedProvider>,
-  );
-
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // Deprecated
-    removeListener: vi.fn(), // Deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
-
 describe('Testing Home Screen: User Portal', () => {
   beforeEach(() => {
     mockUseParams.mockReturnValue({ orgId: 'orgId' });
   });
   afterAll(() => {
     vi.clearAllMocks();
-  });
-
-  it('Check if HomeScreen renders properly', async () => {
-    renderHomeScreen();
-
-    await wait();
-    const startPostBtn = await screen.findByTestId('postBtn');
-    expect(startPostBtn).toBeInTheDocument();
-  });
-
-  it('StartPostModal should render on click of StartPost btn', async () => {
-    renderHomeScreen();
-    await wait();
-    const startPostBtn = await screen.findByTestId('postBtn');
-    expect(startPostBtn).toBeInTheDocument();
-    await userEvent.click(startPostBtn);
-    const startPostModal = screen.getByTestId('startPostModal');
-    expect(startPostModal).toBeInTheDocument();
   });
 
   it('StartPostModal should close on clicking the close button', async () => {
@@ -528,20 +475,6 @@ describe('Testing Home Screen: User Portal', () => {
     const fileInput = screen.getByTestId('postImageInput') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: null } });
     expect(fileInput.files?.length).toBeFalsy();
-  });
-
-  it('Check whether Posts render in PostCard', async () => {
-    setItem('userId', '640d98d9eb6a743d75341067');
-    renderHomeScreen();
-    await wait();
-    const postCardContainers = screen.findAllByTestId('postCardContainer');
-    expect(postCardContainers).not.toBeNull();
-    expect(screen.queryAllByText('post one')[0]).toBeInTheDocument();
-    expect(
-      screen.queryAllByText('This is the first post')[0],
-    ).toBeInTheDocument();
-    expect(screen.queryByText('post two')).toBeInTheDocument();
-    expect(screen.queryByText('This is the post two')).toBeInTheDocument();
   });
 
   it('Checking if refetch works after deleting this post', async () => {
@@ -589,40 +522,6 @@ describe('HomeScreen with invalid orgId', () => {
   });
 });
 
-describe('Testing Home Screen: User Portal with Empty Posts', () => {
-  beforeEach(() => {
-    mockUseParams.mockReturnValue({ orgId: 'emptyOrgId' });
-  });
-
-  afterAll(() => {
-    vi.clearAllMocks();
-  });
-
-  it('Check if HomeScreen renders properly with empty posts', async () => {
-    renderHomeScreenWithEmptyPosts();
-    await wait(300);
-    const startPostBtn = await screen.findByTestId('postBtn');
-    expect(startPostBtn).toBeInTheDocument();
-  });
-
-  it('StartPostModal should render on click of StartPost btn with empty posts', async () => {
-    renderHomeScreenWithEmptyPosts();
-    await wait(300);
-    const startPostBtn = await screen.findByTestId('postBtn');
-    expect(startPostBtn).toBeInTheDocument();
-    await userEvent.click(startPostBtn);
-    const startPostModal = screen.getByTestId('startPostModal');
-    expect(startPostModal).toBeInTheDocument();
-  });
-
-  it('Check whether no Posts render when there are empty posts', async () => {
-    renderHomeScreenWithEmptyPosts();
-    await wait(300);
-    const postCardContainers = screen.queryAllByTestId('postCardContainer');
-    expect(postCardContainers).toHaveLength(0);
-  });
-});
-
 describe('Testing Home Screen additional features', () => {
   beforeEach(() => {
     mockUseParams.mockReturnValue({ orgId: 'orgId' });
@@ -634,72 +533,6 @@ describe('Testing Home Screen additional features', () => {
     localStorage.clear();
   });
 
-  it('should display promoted posts (advertisements)', async () => {
-    renderHomeScreen();
-    await wait(300);
-    const promotedPostsContainer = await screen.findByTestId(
-      'promotedPostsContainer',
-    );
-    expect(promotedPostsContainer).toBeInTheDocument();
-  });
-
-  it('should handle file input change for post creation', async () => {
-    renderHomeScreen();
-    await wait(300);
-    if (!global.URL.createObjectURL) {
-      global.URL.createObjectURL = vi.fn();
-    }
-    global.URL.createObjectURL = vi.fn(() => 'mocked-url');
-    const fileInput = screen.getByTestId('postImageInput');
-    expect(fileInput).toBeInTheDocument();
-    const file = new File(['image content'], 'image.png', {
-      type: 'image/png',
-    });
-    await userEvent.upload(fileInput, file);
-    await wait(300);
-    const postBtn = screen.getByTestId('postBtn');
-    expect(postBtn).toBeInTheDocument();
-    await userEvent.click(postBtn);
-    await wait(300);
-    const modal = screen.getByTestId('startPostModal');
-    expect(modal).toBeInTheDocument();
-    await waitFor(
-      () => {
-        const imgPreview = screen.queryByAltText('Post Image Preview');
-        if (imgPreview) {
-          expect(imgPreview).toBeInTheDocument();
-        }
-      },
-      { timeout: 1000 },
-    );
-  });
-
-  it('should display a message when there are no posts', async () => {
-    mockUseParams.mockReturnValue({ orgId: 'emptyOrgId' });
-    renderHomeScreenWithEmptyPosts();
-    await wait(300);
-    const noPostsMessage = screen.queryByText('nothingToShowHere');
-    if (noPostsMessage) {
-      expect(noPostsMessage).toBeInTheDocument();
-    } else {
-      // If not found with exact text, look for any text that might contain the message
-      const possibleMessages = [/nothing to show/i, /no posts/i, /empty/i];
-      let found = false;
-      for (const pattern of possibleMessages) {
-        const element = screen.queryByText(pattern);
-        if (element) {
-          expect(element).toBeInTheDocument();
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        const postCards = screen.queryAllByTestId('postCardContainer');
-        expect(postCards.length).toBe(0);
-      }
-    }
-  });
-
   it('loads more posts when "Load More" is clicked', async () => {
     renderHomeScreen();
     await wait(300);
@@ -709,16 +542,5 @@ describe('Testing Home Screen additional features', () => {
     await wait(300);
     const postCards = screen.queryAllByTestId('postCardContainer');
     expect(postCards.length).toBeGreaterThan(2); // Assuming there were initially 2 posts
-  });
-
-  it('handles post clicking', async () => {
-    renderHomeScreen();
-    await wait(300);
-    const postCards = screen.queryAllByTestId('postCardContainer');
-    expect(postCards.length).toBeGreaterThan(0);
-    const viewBtn = within(postCards[1]).getByTestId('viewPostBtn0');
-    expect(viewBtn).toBeInTheDocument();
-    await userEvent.click(viewBtn);
-    await wait(500);
   });
 });

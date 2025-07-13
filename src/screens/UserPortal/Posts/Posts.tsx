@@ -97,8 +97,8 @@ type Ad = {
   name: string;
   type: 'BANNER' | 'MENU' | 'POPUP';
   mediaUrl: string;
-  endDate: string; // Assuming it's a string in the format 'yyyy-MM-dd'
-  startDate: string; // Assuming it's a string in the format 'yyyy-MM-dd'
+  endDate: string;
+  startDate: string;
 };
 
 export default function home(): JSX.Element {
