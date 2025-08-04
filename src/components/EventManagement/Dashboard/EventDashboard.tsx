@@ -137,7 +137,7 @@ const EventDashboard = (props: { eventId: string }): JSX.Element => {
               <h1>
                 <b data-testid="registrations-count">N/A</b>
               </h1>
-              <span>No of Registrations</span>
+              <span>No of Redgistrations</span>
             </div>
           </div>
           <div className={`${styles.ctacards}`} data-testid="attendees-card">
