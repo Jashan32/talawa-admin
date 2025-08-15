@@ -228,6 +228,7 @@ export default function organizations(): React.JSX.Element {
     refetch: refetchJoined,
   } = useQuery(USER_JOINED_ORGANIZATIONS_PG, {
     variables: { id: userId, first: rowsPerPage, filter: filterName },
+    skip: mode !== 1,
   });
 
   const {
@@ -236,6 +237,7 @@ export default function organizations(): React.JSX.Element {
     refetch: refetchCreated,
   } = useQuery(USER_CREATED_ORGANIZATIONS, {
     variables: { id: userId, filter: filterName },
+    skip: mode !== 2,
   });
   /**
    * 2) doSearch sets the filterName (triggering refetch)

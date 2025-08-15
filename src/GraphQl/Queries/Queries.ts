@@ -51,8 +51,8 @@ const ORG_FIELDS = gql`
 
 // Full query with members
 export const ORGANIZATION_LIST = gql`
-  query {
-    organizations {
+  query OrganizationList($filter: String) {
+    organizations(filter: $filter) {
       ...OrgFields
       members(first: 32) {
         edges {
