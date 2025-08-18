@@ -51,7 +51,10 @@ import styles from '../../../style/app-fixed.module.css';
 import type { ApolloQueryResult } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client';
 import useLocalStorage from 'utils/useLocalstorage';
-import { CREATE_CHAT } from 'GraphQl/Mutations/OrganizationMutations';
+import {
+  CREATE_CHAT,
+  CREATE_CHAT_MEMBERSHIP,
+} from 'GraphQl/Mutations/OrganizationMutations';
 import Table from '@mui/material/Table';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
@@ -59,14 +62,31 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { styled } from '@mui/material/styles';
 import type { InterfaceQueryUserListItem } from 'utils/interfaces';
-import { USERS_CONNECTION_LIST } from 'GraphQl/Queries/Queries';
+
+// Define the correct interface for member edge structure
+interface IMemberNode {
+  id: string;
+  name: string;
+  role: string;
+  avatarURL?: string;
+  createdAt: string;
+  emailAddress?: string;
+}
+
+interface IMemberEdge {
+  cursor: string;
+  node: IMemberNode;
+}
+import {
+  ORGANIZATIONS_MEMBER_CONNECTION_LIST,
+  USERS_CONNECTION_LIST,
+} from 'GraphQl/Queries/Queries';
 import Loader from 'components/Loader/Loader';
 import { Search } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import Avatar from 'components/Avatar/Avatar';
 import { FiEdit } from 'react-icons/fi';
-import { useMinioUpload } from 'utils/MinioUpload';
 
 interface InterfaceCreateGroupChatProps {
   toggleCreateGroupChatModal: () => void;
@@ -116,16 +136,17 @@ export default function CreateGroupChat({
   const { t } = useTranslation('translation', { keyPrefix: 'userChat' });
 
   const [createChat] = useMutation(CREATE_CHAT);
+  const [createChatMembership] = useMutation(CREATE_CHAT_MEMBERSHIP);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [userIds, setUserIds] = useState<string[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [addUserModalisOpen, setAddUserModalisOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { orgId: currentOrg } = useParams();
-  const { uploadFileToMinio } = useMinioUpload();
 
   function openAddUserModal(): void {
     setAddUserModalisOpen(true);
@@ -136,7 +157,10 @@ export default function CreateGroupChat({
 
   function reset(): void {
     setTitle('');
+    setDescription('');
     setUserIds([]);
+    setSelectedFile(null);
+    setSelectedImage(null);
   }
 
   useEffect(() => {
@@ -144,19 +168,50 @@ export default function CreateGroupChat({
   }, [userIds]);
 
   async function handleCreateGroupChat(): Promise<void> {
-    await createChat({
-      variables: {
-        organizationId: currentOrg,
-        userIds: [userId, ...userIds],
-        name: title,
-        isGroup: true,
-        image: selectedImage,
-      },
-    });
-    chatsListRefetch();
-    toggleAddUserModal();
-    toggleCreateGroupChatModal();
-    reset();
+    try {
+      // First, create the chat
+      const chatResult = await createChat({
+        variables: {
+          organizationId: currentOrg,
+          name: title,
+          description: description,
+          avatar: selectedFile,
+        },
+      });
+
+      const chatId = chatResult.data?.createChat?.id;
+
+      if (chatId) {
+        // Add the current user as an administrator
+        await createChatMembership({
+          variables: {
+            chatId,
+            memberId: userId,
+            role: 'administrator',
+          },
+        });
+
+        // Add all selected users as regular members
+        const membershipPromises = userIds.map((memberId) =>
+          createChatMembership({
+            variables: {
+              chatId,
+              memberId,
+              role: 'regular',
+            },
+          }),
+        );
+
+        await Promise.all(membershipPromises);
+      }
+
+      chatsListRefetch();
+      toggleAddUserModal();
+      toggleCreateGroupChatModal();
+      reset();
+    } catch (error) {
+      console.error('Error creating group chat:', error);
+    }
   }
 
   const [userName, setUserName] = useState('');
@@ -165,18 +220,14 @@ export default function CreateGroupChat({
     data: allUsersData,
     loading: allUsersLoading,
     refetch: allUsersRefetch,
-  } = useQuery(USERS_CONNECTION_LIST, {
-    variables: { firstName_contains: '', lastName_contains: '' },
+  } = useQuery(ORGANIZATIONS_MEMBER_CONNECTION_LIST, {
+    variables: { orgId: currentOrg, first: 32 },
   });
 
   const handleUserModalSearchChange = (e: React.FormEvent): void => {
     e.preventDefault();
-    const [firstName, lastName] = userName.split(' ');
-    const newFilterData = {
-      firstName_contains: firstName || '',
-      lastName_contains: lastName || '',
-    };
-    allUsersRefetch({ ...newFilterData });
+    // For now, we'll just filter on the client side
+    // TODO: Implement server-side filtering when the API supports it
   };
 
   const handleImageClick = (): void => {
@@ -187,13 +238,11 @@ export default function CreateGroupChat({
     e: React.ChangeEvent<HTMLInputElement>,
   ): Promise<void> => {
     const file = e.target.files?.[0];
-    if (file && currentOrg) {
-      try {
-        const { objectName } = await uploadFileToMinio(file, currentOrg);
-        setSelectedImage(objectName);
-      } catch (error) {
-        console.error('Error uploading image to MinIO:', error);
-      }
+    if (file) {
+      setSelectedFile(file);
+      // Create a preview URL for display
+      const previewUrl = URL.createObjectURL(file);
+      setSelectedImage(previewUrl);
     }
   };
 
@@ -323,33 +372,36 @@ export default function CreateGroupChat({
                   </TableHead>
                   <TableBody>
                     {allUsersData &&
-                      allUsersData.users.length > 0 &&
-                      allUsersData.users.map(
-                        (
-                          userDetails: InterfaceQueryUserListItem,
-                          index: number,
-                        ) => (
+                      allUsersData.organization.members.edges.length > 0 &&
+                      allUsersData.organization.members.edges
+                        .filter((userDetails: IMemberEdge) => {
+                          if (!userName) return true;
+                          const searchTerm = userName.toLowerCase();
+                          const fullName =
+                            userDetails.node.name?.toLowerCase() || '';
+                          // const email = userDetails.node.emailAddress?.toLowerCase() || '';
+                          return fullName.includes(searchTerm);
+                        })
+                        .map((userDetails: IMemberEdge, index: number) => (
                           <StyledTableRow
                             data-testid="user"
-                            key={userDetails.user._id}
+                            key={userDetails.node.id}
                           >
                             <StyledTableCell component="th" scope="row">
                               {index + 1}
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              {userDetails.user.firstName +
-                                ' ' +
-                                userDetails.user.lastName}
+                              {userDetails.node.name}
                               <br />
-                              {userDetails.user.email}
+                              {/* {userDetails.node.emailAddress} */}
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              {userIds.includes(userDetails.user._id) ? (
+                              {userIds.includes(userDetails.node.id) ? (
                                 <Button
                                   variant="danger"
                                   onClick={() => {
                                     const updatedUserIds = userIds.filter(
-                                      (id) => id !== userDetails.user._id,
+                                      (id) => id !== userDetails.node.id,
                                     );
                                     setUserIds(updatedUserIds);
                                   }}
@@ -363,7 +415,7 @@ export default function CreateGroupChat({
                                   onClick={() => {
                                     setUserIds([
                                       ...userIds,
-                                      userDetails.user._id,
+                                      userDetails.node.id,
                                     ]);
                                   }}
                                   data-testid="addBtn"
@@ -373,8 +425,7 @@ export default function CreateGroupChat({
                               )}
                             </StyledTableCell>
                           </StyledTableRow>
-                        ),
-                      )}
+                        ))}
                   </TableBody>
                 </Table>
               </StyledTableContainer>

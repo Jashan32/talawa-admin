@@ -34,25 +34,13 @@ import ChatRoom from 'components/UserPortal/ChatRoom/ChatRoom';
 import useLocalStorage from 'utils/useLocalstorage';
 import NewChat from 'assets/svgs/newChat.svg?react';
 import styles from 'style/app-fixed.module.css';
-import {
-  CHATS_LIST,
-  GROUP_CHAT_LIST,
-  UNREAD_CHAT_LIST,
-} from 'GraphQl/Queries/PlugInQueries';
+import { CHATS_LIST, UNREAD_CHAT_LIST } from 'GraphQl/Queries/PlugInQueries';
 import CreateGroupChat from '../../../components/UserPortal/CreateGroupChat/CreateGroupChat';
 import CreateDirectChat from 'components/UserPortal/CreateDirectChat/CreateDirectChat';
 import { MARK_CHAT_MESSAGES_AS_READ } from 'GraphQl/Mutations/OrganizationMutations';
 import type { GroupChat } from 'types/Chat/type';
-interface InterfaceContactCardProps {
-  id: string;
-  title: string;
-  image: string;
-  selectedContact: string;
-  setSelectedContact: React.Dispatch<React.SetStateAction<string>>;
-  isGroup: boolean;
-  unseenMessages: number;
-  lastMessage: string;
-}
+import type { InterfaceContactCardProps } from 'types/Chat/interface';
+import { useParams } from 'react-router-dom';
 
 export default function chat(): JSX.Element {
   const { t } = useTranslation('translation', { keyPrefix: 'userChat' });
@@ -63,6 +51,7 @@ export default function chat(): JSX.Element {
   const [filterType, setFilterType] = useState('all');
   const { getItem } = useLocalStorage();
   const userId = getItem('userId');
+  const { orgId: organizationId } = useParams();
 
   const [createDirectChatModalisOpen, setCreateDirectChatModalisOpen] =
     useState(false);
@@ -91,9 +80,6 @@ export default function chat(): JSX.Element {
     refetch: chatsListRefetch,
   } = useQuery(CHATS_LIST, { variables: { id: userId } });
 
-  const { data: groupChatListData, refetch: groupChatListRefetch } =
-    useQuery(GROUP_CHAT_LIST);
-
   const { data: unreadChatListData, refetch: unreadChatListRefetch } =
     useQuery(UNREAD_CHAT_LIST);
 
@@ -109,10 +95,15 @@ export default function chat(): JSX.Element {
 
   React.useEffect(() => {
     async function getChats(): Promise<void> {
+      const filteredChatsListData = chatsListData?.chatsByUser?.filter(
+        (chat: GroupChat) => {
+          return chat.organization.id == organizationId;
+        },
+      );
       if (filterType === 'all') {
-        await chatsListRefetch();
-        if (chatsListData && chatsListData.chatsByUserId) {
-          setChats(chatsListData.chatsByUserId);
+        // await chatsListRefetch();
+        if (filteredChatsListData) {
+          setChats(filteredChatsListData);
         }
       } else if (filterType === 'unread') {
         await unreadChatListRefetch();
@@ -120,20 +111,18 @@ export default function chat(): JSX.Element {
           setChats(unreadChatListData.getUnreadChatsByUserId);
         }
       } else if (filterType === 'group') {
-        await groupChatListRefetch();
-        if (groupChatListData && groupChatListData.getGroupChatsByUserId) {
-          setChats(groupChatListData.getGroupChatsByUserId);
+        // await chatsListRefetch();
+        if (filteredChatsListData) {
+          // Filter group chats based on members count (more than 2 members)
+          const groupChats = filteredChatsListData.filter((chat: GroupChat) => {
+            return (chat.members?.edges?.length || 0) > 2;
+          });
+          setChats(groupChats);
         }
       }
     }
     getChats();
-  }, [filterType]);
-
-  React.useEffect(() => {
-    if (chatsListData && chatsListData?.chatsByUserId.length) {
-      setChats(chatsListData.chatsByUserId);
-    }
-  }, [chatsListData]);
+  }, [filterType, chatsListData, unreadChatListData]);
 
   return (
     <>
@@ -229,33 +218,23 @@ export default function chat(): JSX.Element {
                   >
                     {!!chats.length &&
                       chats.map((chat: GroupChat) => {
+                        const isGroup = (chat.members?.edges?.length || 0) > 2;
+                        const lastMessage =
+                          chat.messages?.edges?.[chat.messages.edges.length - 1]
+                            ?.node?.body || '';
+
                         const cardProps: InterfaceContactCardProps = {
-                          id: chat._id,
-                          title: !chat.isGroup
-                            ? chat.users[0]?._id === userId
-                              ? `${chat.users[1]?.firstName ?? ''} ${chat.users[1]?.lastName ?? ''}`
-                              : `${chat.users[0]?.firstName ?? ''} ${chat.users[0]?.lastName ?? ''}`
-                            : (chat.name ?? ''),
-                          image: chat.isGroup
-                            ? (chat.image ?? '')
-                            : userId
-                              ? (chat.users[1]?.image ?? '')
-                              : (chat.users[0]?.image ?? ''),
+                          id: chat.id,
+                          name: chat.name,
+                          title: chat.name ?? '',
+                          image: chat.avatarURL ?? '',
                           setSelectedContact,
                           selectedContact,
-                          isGroup: chat.isGroup,
-                          unseenMessages: Number(
-                            (
-                              JSON.parse(
-                                chat.unseenMessagesByUsers as string,
-                              ) as Record<string, number>
-                            )[userId as string],
-                          ),
-                          lastMessage:
-                            chat.messages[chat.messages.length - 1]
-                              ?.messageContent,
+                          isGroup: isGroup,
+                          unseenMessages: 0, // TODO: implement unseen messages count
+                          lastMessage: lastMessage,
                         };
-                        return <ContactCard {...cardProps} key={chat._id} />;
+                        return <ContactCard {...cardProps} key={chat.id} />;
                       })}
                   </div>
                 </>

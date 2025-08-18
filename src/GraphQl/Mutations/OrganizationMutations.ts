@@ -59,22 +59,52 @@ export const REMOVE_SAMPLE_ORGANIZATION_MUTATION = gql`
 
 export const CREATE_CHAT = gql`
   mutation createChat(
-    $userIds: [ID!]!
-    $organizationId: ID
-    $isGroup: Boolean!
-    $name: String
-    $image: String
+    $organizationId: ID!
+    $name: String!
+    $description: String
+    $avatar: Upload
   ) {
     createChat(
-      data: {
-        userIds: $userIds
+      input: {
         organizationId: $organizationId
-        isGroup: $isGroup
         name: $name
-        image: $image
+        description: $description
+        avatar: $avatar
       }
     ) {
-      _id
+      id
+      name
+      description
+      avatarURL
+      organization {
+        id
+      }
+      creator {
+        id
+      }
+    }
+  }
+`;
+
+export const CREATE_CHAT_MEMBERSHIP = gql`
+  mutation CreateChatMembership(
+    $chatId: ID!
+    $memberId: ID!
+    $role: ChatMembershipRole
+  ) {
+    createChatMembership(
+      input: { chatId: $chatId, memberId: $memberId, role: $role }
+    ) {
+      id
+      name
+      members(first: 10) {
+        edges {
+          node {
+            id
+            name
+          }
+        }
+      }
     }
   }
 `;
@@ -124,39 +154,21 @@ export const EDIT_CHAT_MESSAGE = gql`
 `;
 
 export const SEND_MESSAGE_TO_CHAT = gql`
-  mutation sendMessageToChat(
+  mutation SendMessageToChat(
+    $body: String!
     $chatId: ID!
-    $replyTo: ID
-    $media: String
-    $messageContent: String
+    $parentMessageId: ID
   ) {
-    sendMessageToChat(
-      chatId: $chatId
-      replyTo: $replyTo
-      messageContent: $messageContent
-      media: $media
+    createChatMessage(
+      input: { body: $body, chatId: $chatId, parentMessageId: $parentMessageId }
     ) {
-      _id
+      id
+      body
       createdAt
-      messageContent
-      media
-      replyTo {
-        _id
-        createdAt
-        messageContent
-        sender {
-          _id
-          firstName
-          lastName
-        }
-        updatedAt
+      creator {
+        id
+        name
       }
-      sender {
-        _id
-        firstName
-        lastName
-      }
-      updatedAt
     }
   }
 `;

@@ -806,7 +806,6 @@ export const ORGANIZATIONS_MEMBER_CONNECTION_LIST = gql`
             name
             role
             avatarURL
-            emailAddress
             createdAt
           }
         }

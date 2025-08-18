@@ -42,15 +42,15 @@ import type { InterfaceContactCardProps } from 'types/Chat/interface';
 
 function contactCard(props: InterfaceContactCardProps): JSX.Element {
   const handleSelectedContactChange = (): void => {
-    props.setSelectedContact(props.id);
+    props.setSelectedContact(props.name);
   };
   const [isSelected, setIsSelected] = React.useState(
-    props.selectedContact === props.id,
+    props.selectedContact === props.name,
   );
 
   // Update selection state when the selected contact changes
   React.useEffect(() => {
-    setIsSelected(props.selectedContact === props.id);
+    setIsSelected(props.selectedContact === props.name);
   }, [props.selectedContact]);
 
   return (

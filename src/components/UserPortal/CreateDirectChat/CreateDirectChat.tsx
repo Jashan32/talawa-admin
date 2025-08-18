@@ -42,7 +42,10 @@ import type {
 } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client';
 import useLocalStorage from 'utils/useLocalstorage';
-import { CREATE_CHAT } from 'GraphQl/Mutations/OrganizationMutations';
+import {
+  CREATE_CHAT,
+  CREATE_CHAT_MEMBERSHIP,
+} from 'GraphQl/Mutations/OrganizationMutations';
 import Table from '@mui/material/Table';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
@@ -50,7 +53,10 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { styled } from '@mui/material/styles';
 import type { InterfaceQueryUserListItem } from 'utils/interfaces';
-import { USERS_CONNECTION_LIST } from 'GraphQl/Queries/Queries';
+import {
+  ORGANIZATIONS_MEMBER_CONNECTION_LIST,
+  USERS_CONNECTION_LIST,
+} from 'GraphQl/Queries/Queries';
 import Loader from 'components/Loader/Loader';
 import { Search } from '@mui/icons-material';
 import { useParams } from 'react-router';
@@ -59,6 +65,17 @@ import styles from 'style/app-fixed.module.css';
 import { errorHandler } from 'utils/errorHandler';
 import type { TFunction } from 'i18next';
 import { type GroupChat } from 'types/Chat/type';
+// Interface for organization member edge
+interface InterfaceMemberEdge {
+  node: {
+    id: string;
+    name: string;
+    // emailAddress: string;
+    avatarURL?: string;
+    role: string;
+  };
+}
+
 interface InterfaceCreateDirectChatProps {
   toggleCreateDirectChatModal: () => void;
   createDirectChatModalisOpen: boolean;
@@ -88,43 +105,22 @@ const { getItem } = useLocalStorage();
 
 export const handleCreateDirectChat = async (
   id: string,
+  userName: string,
   chats: GroupChat[],
   t: TFunction<'translation', 'userChat'>,
-  createChat: {
-    (
-      options?:
-        | MutationFunctionOptions<
-            unknown,
-            OperationVariables,
-            DefaultContext,
-            ApolloCache<unknown>
-          >
-        | undefined,
-    ): Promise<FetchResult<unknown>>;
-    (arg0: {
-      variables: {
-        organizationId: unknown;
-        userIds: unknown[];
-        isGroup: boolean;
-      };
-    }): unknown;
-  },
+  createChat: any,
+  createChatMembership: any,
   organizationId: string | undefined,
   userId: string | null,
-  chatsListRefetch: {
-    (
-      variables?: Partial<{ id: string }> | undefined,
-    ): Promise<ApolloQueryResult<unknown>>;
-    (): Promise<ApolloQueryResult<unknown>>;
-  },
-  toggleCreateDirectChatModal: { (): void; (): void },
+  chatsListRefetch: any,
+  toggleCreateDirectChatModal: any,
 ): Promise<void> => {
   const existingChat = chats.find(
     (chat) =>
       chat.users?.length === 2 && chat.users.some((user) => user._id === id),
   );
   if (existingChat) {
-    const existingUser = existingChat.users.find((user) => user._id === id);
+    const existingUser = existingChat?.users?.find((user) => user._id === id);
     errorHandler(
       t,
       new Error(
@@ -133,9 +129,34 @@ export const handleCreateDirectChat = async (
     );
   } else {
     try {
-      await createChat({
-        variables: { organizationId, userIds: [userId, id], isGroup: false },
+      // Create the chat using the correct schema
+      const chat = await createChat({
+        variables: {
+          organizationId,
+          name: `Chat with ${userName}`, // Use the actual user's name
+          description: 'Direct conversation',
+        },
       });
+
+      const chatId = chat.data.createChat.id;
+
+      // Add both users as members
+      await createChatMembership({
+        variables: {
+          chatId: chatId,
+          memberId: userId,
+          role: 'regular',
+        },
+      });
+
+      await createChatMembership({
+        variables: {
+          chatId: chatId,
+          memberId: id,
+          role: 'regular',
+        },
+      });
+
       await chatsListRefetch();
       toggleCreateDirectChatModal();
     } catch (error) {
@@ -158,26 +179,32 @@ export default function createDirectChatModal({
   const [userName, setUserName] = useState('');
 
   const [createChat] = useMutation(CREATE_CHAT);
+  const [createChatMembership] = useMutation(CREATE_CHAT_MEMBERSHIP);
 
   const {
     data: allUsersData,
     loading: allUsersLoading,
     refetch: allUsersRefetch,
-  } = useQuery(USERS_CONNECTION_LIST, {
-    variables: { firstName_contains: '', lastName_contains: '' },
+  } = useQuery(ORGANIZATIONS_MEMBER_CONNECTION_LIST, {
+    variables: { orgId: organizationId, first: 32 },
   });
 
   const handleUserModalSearchChange = (e: React.FormEvent): void => {
     e.preventDefault();
-    const [firstName, lastName] = userName.split(' ');
-
-    const newFilterData = {
-      firstName_contains: firstName || '',
-      lastName_contains: lastName || '',
-    };
-
-    allUsersRefetch({ ...newFilterData });
+    // Note: Since the GraphQL query doesn't support name filtering,
+    // we'll use client-side filtering below in the render
   };
+
+  // Filter users based on search term
+  const filteredUsers =
+    allUsersData?.organization?.members?.edges?.filter(
+      (edge: InterfaceMemberEdge) => {
+        if (!userName) return true;
+        const searchTerm = userName.toLowerCase();
+        return edge.node.name.toLowerCase().includes(searchTerm);
+        //  edge.node.emailAddress.toLowerCase().includes(searchTerm);
+      },
+    ) || [];
 
   return (
     <>
@@ -234,35 +261,31 @@ export default function createDirectChatModal({
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {allUsersData &&
-                      allUsersData.users.length > 0 &&
-                      allUsersData.users.map(
-                        (
-                          userDetails: InterfaceQueryUserListItem,
-                          index: number,
-                        ) => (
+                    {filteredUsers.length > 0 &&
+                      filteredUsers.map(
+                        (userDetails: InterfaceMemberEdge, index: number) => (
                           <StyledTableRow
                             data-testid="user"
-                            key={userDetails.user._id}
+                            key={userDetails.node.id}
                           >
                             <StyledTableCell component="th" scope="row">
                               {index + 1}
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              {userDetails.user.firstName +
-                                ' ' +
-                                userDetails.user.lastName}
+                              {userDetails.node.name}
                               <br />
-                              {userDetails.user.email}
+                              {/* {userDetails.node.emailAddress} */}
                             </StyledTableCell>
                             <StyledTableCell align="center">
                               <Button
                                 onClick={() => {
                                   handleCreateDirectChat(
-                                    userDetails.user._id,
+                                    userDetails.node.id,
+                                    userDetails.node.name,
                                     chats,
                                     t,
                                     createChat,
+                                    createChatMembership,
                                     organizationId,
                                     userId,
                                     chatsListRefetch,

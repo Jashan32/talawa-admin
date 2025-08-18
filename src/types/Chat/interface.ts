@@ -16,6 +16,7 @@ export interface InterfaceGroupChatDetailsProps {
 
 export interface InterfaceContactCardProps {
   id: string;
+  name: string;
   title: string;
   image: string;
   selectedContact: string;

@@ -2,39 +2,63 @@ import type { User } from '../User/type';
 import type { Organization } from 'types/Organization/type';
 
 export type DirectMessage = {
-  _id: string;
+  id: string;
   createdAt: Date;
-  sender: User;
-  receiver?: User; //Optional
-  replyTo?: DirectMessage; // Optional
-  messageContent: string;
-  chatMessageBelongsTo?: GroupChat;
-  media?: string; // Optional
-  type?: string;
-  deletedBy?: User[]; // Optional and nullable
-  updatedAt: Date;
+  creator: {
+    id: string;
+    name: string;
+    emailAddress: string;
+  };
+  body: string;
+  parentMessage?: DirectMessage;
+  updatedAt?: Date;
 };
 
 export type GroupChat = {
-  _id: string;
-  isGroup: boolean;
-  name?: string; // Optional
-  image?: string;
-  messages: DirectMessage[]; // nullable
-  admins: User[]; // Optional and nullable
-  users: User[];
-  unseenMessagesByUsers: string;
-  description: string;
+  id: string;
+  name: string;
+  description?: string;
+  avatarURL?: string;
+  avatarMimeType?: string;
   createdAt: Date;
-  creator?: User; // Optional
-  organization?: Organization; // Optional
-  updatedAt?: Date; // Optional
-  lastMessageId?: string; // Optional
+  updatedAt?: Date;
+  creator: {
+    id: string;
+    name: string;
+    emailAddress: string;
+  };
+  messages: {
+    edges: Array<{
+      node: DirectMessage;
+    }>;
+  };
+  organization: {
+    id: string;
+    name: string;
+  };
+  members: {
+    edges: Array<{
+      node: {
+        id: string;
+        name: string;
+        emailAddress: string;
+        avatarURL?: string;
+      };
+    }>;
+  };
+  // Legacy properties for backward compatibility
+  _id?: string;
+  isGroup?: boolean;
+  image?: string;
+  admins?: User[];
+  users?: User[];
+  unseenMessagesByUsers?: string;
+  lastMessageId?: string;
 };
 
 export type ChatInput = {
-  isGroup: boolean;
-  organizationId?: string;
-  userIds: string[];
-  name?: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  avatar?: File;
 };

@@ -323,57 +323,45 @@ export const UNREAD_CHAT_LIST = gql`
 `;
 
 export const CHATS_LIST = gql`
-  query ChatsByUserId($id: ID!, $searchString: String) {
-    chatsByUserId(
-      id: $id
-      where: {
-        name_contains: $searchString
-        user: {
-          firstName_contains: $searchString
-          lastName_contains: $searchString
-        }
-      }
-    ) {
-      _id
-      isGroup
+  query ChatsByUser {
+    chatsByUser {
+      id
       name
-      image
+      description
+      avatarURL
+      avatarMimeType
+      createdAt
+      updatedAt
       creator {
-        _id
-        firstName
-        lastName
-        email
+        id
+        name
       }
-      messages {
-        _id
-        createdAt
-        messageContent
-        sender {
-          _id
-          firstName
-          lastName
-          email
+      messages(first: 10) {
+        edges {
+          node {
+            id
+            body
+            createdAt
+            creator {
+              id
+              name
+            }
+          }
         }
       }
       organization {
-        _id
+        id
         name
       }
-      users {
-        _id
-        firstName
-        lastName
-        email
-        image
+      members(first: 10) {
+        edges {
+          node {
+            id
+            name
+            avatarURL
+          }
+        }
       }
-      admins {
-        _id
-        firstName
-        lastName
-        email
-        image
-      }
-      unseenMessagesByUsers
     }
   }
 `;

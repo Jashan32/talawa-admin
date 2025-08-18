@@ -28,7 +28,11 @@ import { Button, Dropdown, Form, InputGroup } from 'react-bootstrap';
 import styles from './ChatRoom.module.css';
 import PermContactCalendarIcon from '@mui/icons-material/PermContactCalendar';
 import { useTranslation } from 'react-i18next';
-import { CHAT_BY_ID, UNREAD_CHAT_LIST } from 'GraphQl/Queries/PlugInQueries';
+import {
+  CHAT_BY_ID,
+  CHATS_LIST,
+  UNREAD_CHAT_LIST,
+} from 'GraphQl/Queries/PlugInQueries';
 import type { ApolloQueryResult } from '@apollo/client';
 import { useMutation, useQuery, useSubscription } from '@apollo/client';
 import {
@@ -198,19 +202,20 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
     const newMessageValue = e.target.value;
     setNewMessage(newMessageValue);
   };
+  const [currentChat, setCurrentChat] = useState<GroupChat>();
 
   const [sendMessageToChat] = useMutation(SEND_MESSAGE_TO_CHAT, {
     variables: {
-      chatId: props.selectedContact,
-      replyTo: replyToDirectMessage?._id,
-      media: attachmentObjectName || null,
-      messageContent: newMessage,
+      chatId: currentChat?.id,
+      parentMessageId: replyToDirectMessage?.id,
+      // media: attachmentObjectName || null,
+      body: newMessage,
     },
   });
 
   const [editChatMessage] = useMutation(EDIT_CHAT_MESSAGE, {
     variables: {
-      messageId: editMessage?._id,
+      messageId: editMessage?.id,
       messageContent: newMessage,
       chatId: props.selectedContact,
     },
@@ -223,7 +228,7 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
     },
   });
 
-  const { data: chatData, refetch: chatRefetch } = useQuery(CHAT_BY_ID, {
+  const { data: chatData, refetch: chatRefetch } = useQuery(CHATS_LIST, {
     variables: {
       id: props.selectedContact,
     },
@@ -240,7 +245,6 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
       id: userId,
     },
   });
-
   useEffect(() => {
     markChatMessagesAsRead().then(() => {
       props.chatListRefetch();
@@ -250,24 +254,39 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
 
   useEffect(() => {
     if (chatData) {
-      const chat = chatData.chatById;
-      setChat(chat);
-      if (chat.isGroup) {
-        setChatTitle(chat.name);
-        setChatSubtitle(`${chat.users.length} members`);
-        setChatImage(chat.image);
-      } else {
-        const otherUser = chat.users.find(
-          (user: { _id: string }) => user._id !== userId,
+      const chat = chatData.chatsByUser;
+      const currentChat = chat.filter(
+        (chatItem: GroupChat) => chatItem.name == props.selectedContact,
+      );
+      setCurrentChat(currentChat[0]);
+
+      // Determine if it's a group chat based on members count
+      const isGroup = currentChat[0]?.members?.edges?.length > 2;
+
+      if (isGroup) {
+        setChatTitle(currentChat[0]?.name || 'Group Chat');
+        setChatSubtitle(
+          `${currentChat[0]?.members?.edges?.length || 0} members`,
         );
+        setChatImage(currentChat[0]?.avatarURL || '');
+      } else {
+        // For direct chat, show the other user's info
+        const otherUser = currentChat[0]?.members?.edges?.find(
+          (member: any) => member.node.id !== userId,
+        );
+
         if (otherUser) {
-          setChatTitle(`${otherUser.firstName} ${otherUser.lastName}`);
-          setChatSubtitle(otherUser.email);
-          setChatImage(otherUser.image);
+          setChatTitle(otherUser.node.name);
+          // setChatSubtitle(otherUser.node.emailAddress);
+          setChatImage(otherUser.node.avatarURL || '');
+        } else if (currentChat[0]) {
+          setChatTitle(currentChat[0]?.name || 'Direct Chat');
+          setChatSubtitle('Direct conversation');
+          setChatImage(currentChat[0]?.avatarURL || '');
         }
       }
     }
-  }, [chatData]);
+  }, [chatData, userId]);
 
   const sendMessage = async (): Promise<void> => {
     if (editMessage) {
@@ -330,7 +349,7 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
 
     try {
       // Get current organization ID from the chat data
-      const organizationId = chat?.organization?._id || 'organization';
+      const organizationId = currentChat?.organization?.id || 'organization';
 
       // Use MinIO for file uploads regardless of organization context
       // If there's no organization specific ID, use 'organization' as default
@@ -386,7 +405,13 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
                 />
               )}
               <div
-                onClick={() => (chat?.isGroup ? openGroupChatDetails() : null)}
+                onClick={() => {
+                  const isGroup =
+                    (currentChat?.members?.edges?.length || 0) > 2;
+                  if (isGroup) {
+                    openGroupChatDetails();
+                  }
+                }}
                 className={styles.userDetails}
               >
                 <p className={styles.title}>{chatTitle}</p>
@@ -396,23 +421,24 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
           </div>
           <div className={`d-flex flex-grow-1 flex-column`}>
             <div className={styles.chatMessages}>
-              {!!chat?.messages.length && (
+              {!!currentChat?.messages?.edges?.length && (
                 <div id="messages">
-                  {chat?.messages.map((message: DirectMessage) => {
+                  {currentChat?.messages.edges.map((messageNode: any) => {
                     // Get organization ID if available, otherwise use default
                     const organizationId =
-                      chat?.organization?._id || 'organization';
-
+                      currentChat?.organization?.id || 'organization';
+                    const message = messageNode.node;
                     return (
                       <div
                         className={
-                          message.sender._id === userId
+                          message.creator.id === userId
                             ? styles.messageSentContainer
                             : styles.messageReceivedContainer
                         }
-                        key={message._id}
+                        key={message.id}
                       >
-                        {chat.isGroup &&
+                        {/* {chat.isGroup &&   */} {/*Will fix it later */}
+                        {false &&
                           message.sender._id !== userId &&
                           (message.sender?.image ? (
                             <img
@@ -437,31 +463,29 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
                           ))}
                         <div
                           className={
-                            message.sender._id === userId
+                            message.creator.id === userId
                               ? styles.messageSent
                               : styles.messageReceived
                           }
                           data-testid="message"
-                          key={message._id}
-                          id={message._id}
+                          key={message.id}
+                          id={message.id}
                         >
                           <span className={styles.messageContent}>
-                            {chat.isGroup && message.sender._id !== userId && (
-                              <p className={styles.senderInfo}>
-                                {message.sender.firstName +
-                                  ' ' +
-                                  message.sender.lastName}
-                              </p>
-                            )}
-                            {message.replyTo && (
-                              <a href={`#${message.replyTo._id}`}>
+                            {/* Check if it's a group chat and show sender info for messages from others */}
+                            {(currentChat?.members?.edges?.length || 0) > 2 &&
+                              message.creator.id !== userId && (
+                                <p className={styles.senderInfo}>
+                                  {message.creator.name}
+                                </p>
+                              )}
+                            {message.parentMessage && (
+                              <a href={`#${message.parentMessage.id}`}>
                                 <div className={styles.replyToMessage}>
                                   <p className={styles.senderInfo}>
-                                    {message.replyTo.sender.firstName +
-                                      ' ' +
-                                      message.replyTo.sender.lastName}
+                                    {message.parentMessage.creator.name}
                                   </p>
-                                  <span>{message.replyTo.messageContent}</span>
+                                  <span>{message.parentMessage.body}</span>
                                 </div>
                               </a>
                             )}
@@ -472,7 +496,7 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
                                 getFileFromMinio={getFileFromMinio}
                               />
                             )}
-                            {message.messageContent}
+                            {message.body}
                           </span>
                           <div className={styles.messageAttributes}>
                             <Dropdown
@@ -497,7 +521,7 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
                                 <Dropdown.Item
                                   onClick={() => {
                                     setEditMessage(message);
-                                    setNewMessage(message.messageContent);
+                                    setNewMessage(message.body);
                                   }}
                                   data-testid="replyToMessage"
                                 >
@@ -532,30 +556,18 @@ export default function chatRoom(props: IChatRoomProps): JSX.Element {
               onChange={handleImageChange}
               data-testid="hidden-file-input" // <<< ADD THIS
             />
-            {!!replyToDirectMessage?._id && (
+            {!!replyToDirectMessage?.id && (
               <div data-testid="replyMsg" className={styles.replyTo}>
                 <div className={styles.replyToMessageContainer}>
                   <div className={styles.userDetails}>
                     <Avatar
-                      name={
-                        replyToDirectMessage.sender.firstName +
-                        ' ' +
-                        replyToDirectMessage.sender.lastName
-                      }
-                      alt={
-                        replyToDirectMessage.sender.firstName +
-                        ' ' +
-                        replyToDirectMessage.sender.lastName
-                      }
+                      name={replyToDirectMessage.creator.name}
+                      alt={replyToDirectMessage.creator.name}
                       avatarStyle={styles.userImage}
                     />
-                    <span>
-                      {replyToDirectMessage.sender.firstName +
-                        ' ' +
-                        replyToDirectMessage.sender.lastName}
-                    </span>
+                    <span>{replyToDirectMessage.creator.name}</span>
                   </div>
-                  <p>{replyToDirectMessage.messageContent}</p>
+                  <p>{replyToDirectMessage.body}</p>
                 </div>
 
                 <Button
