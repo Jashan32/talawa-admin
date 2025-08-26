@@ -35,6 +35,36 @@ export const CURRENT_USER = gql`
     }
   }
 `;
+export const GET_USER = gql`
+query GetUser($id: String!) {
+  user(input: { id: $id }) {
+         addressLine1
+      addressLine2
+      avatarMimeType
+      avatarURL
+      birthDate
+      city
+      countryCode
+      createdAt
+      description
+      educationGrade
+      emailAddress
+      employmentStatus
+      homePhoneNumber
+      id
+      isEmailAddressVerified
+      maritalStatus
+      mobilePhoneNumber
+      name
+      natalSex
+      naturalLanguageCode
+      postalCode
+      role
+      state
+      updatedAt
+      workPhoneNumber
+  }
+}`;
 
 // Shared fields
 const ORG_FIELDS = gql`

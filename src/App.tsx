@@ -207,7 +207,7 @@ function App(): React.ReactElement {
           <Route element={<SecuredRoute />}>
             <Route element={<SuperAdminScreen />}>
               <Route path="/orglist" element={<OrgList />} />
-              <Route path="/member" element={<MemberDetail />} />
+              <Route path="/member/:memberId" element={<MemberDetail />} />
               <Route path="/users" element={<Users />} />
               <Route path="/communityProfile" element={<CommunityProfile />} />
               <Route path="/pluginstore" element={<PluginStore />} />

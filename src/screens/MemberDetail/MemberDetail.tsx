@@ -34,10 +34,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import Button from 'react-bootstrap/Button';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import styles from 'style/app-fixed.module.css';
 import { UPDATE_CURRENT_USER_MUTATION } from 'GraphQl/Mutations/mutations';
-import { CURRENT_USER } from 'GraphQl/Queries/Queries';
+import { CURRENT_USER, GET_USER } from 'GraphQl/Queries/Queries';
 import { toast } from 'react-toastify';
 import { languages } from 'utils/languages';
 import { errorHandler } from 'utils/errorHandler';
@@ -72,9 +72,13 @@ const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
   const { getItem, setItem } = useLocalStorage();
   const [show, setShow] = useState(false);
   const [isUpdated, setisUpdated] = useState(false);
-  const currentId = location.state?.id || getItem('id') || id;
+  const currentId = getItem('id');
   const originalImageState = React.useRef<string>('');
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+  const params= useParams();
+  const {memberId}=params;
+  console.log("memberId",memberId)
+  console.log("currentId",currentId )
 
   document.title = t('title');
 
@@ -101,17 +105,21 @@ const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
     state: '',
     workPhoneNumber: '',
   });
+  useEffect(() => {
+    console.log(formState)
+  }, [formState])
 
   // Mutation to update the user details
   const [updateUser] = useMutation(UPDATE_CURRENT_USER_MUTATION);
-  const { data: userData, loading } = useQuery(CURRENT_USER, {
-    variables: { id: currentId },
+  const { data: userData, loading } = useQuery(GET_USER, {
+    variables: { id: memberId },
   });
 
   useEffect(() => {
-    if (userData?.currentUser) {
-      setFormState(userData.currentUser);
-      originalImageState.current = userData.currentUser.avatarURL || '';
+    if (userData?.user) {
+      console.log("userData",userData)
+      setFormState(userData.user);
+      originalImageState.current = userData.user.avatarURL || '';
     }
   }, [userData]);
 
@@ -221,7 +229,8 @@ const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
     try {
       const { data: updateData } = await updateUser({ variables: { input } });
 
-      if (updateData) {
+      if (updateData && memberId===currentId) {
+        console.log(memberId==currentId)
         toast.success(
           tCommon('updatedSuccessfully', { item: 'Profile' }) as string,
         );
@@ -491,7 +500,7 @@ const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
                   </label>
                   <input
                     id="email"
-                    value={userData?.currentUser?.emailAddress}
+                    value={formState.emailAddress}
                     className={`form-control ${styles.inputColor}`}
                     type="email"
                     name="email"

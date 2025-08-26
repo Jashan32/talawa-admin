@@ -45,6 +45,7 @@ import { useNavigate, useParams } from 'react-router';
 import useLocalStorage from 'utils/useLocalstorage';
 import styles from 'style/app-fixed.module.css';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { get } from 'http';
 
 const ProfileCard = (): React.JSX.Element => {
   const { getItem } = useLocalStorage();
@@ -57,7 +58,8 @@ const ProfileCard = (): React.JSX.Element => {
   const userImage = getItem('UserImage') as string;
   const navigate = useNavigate();
   const { orgId } = useParams();
-
+  const localStorage = useLocalStorage();
+  const userId = localStorage.getItem('id') as string;
   const MAX_NAME_LENGTH = 20;
   const fullName = `${firstName} ${lastName}`;
   const displayedName =
@@ -108,7 +110,7 @@ const ProfileCard = (): React.JSX.Element => {
           onClick={() =>
             userRole === 'User'
               ? navigate(`/user/settings`)
-              : navigate(`/member/${orgId || ''}`)
+              : navigate(`/member/${orgId ?? userId}`)
           }
         >
           <ChevronRightIcon className={styles.chevronIcon} />
