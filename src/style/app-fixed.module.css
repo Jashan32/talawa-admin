@@ -5036,6 +5036,11 @@ form {
 
 .ArrowIcon {
   font-size: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
 }
 
 .dropdownToggle {
@@ -5064,6 +5069,9 @@ form {
 .profileText {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .ProfileRightConatiner {
@@ -5126,6 +5134,58 @@ form {
   font-size: 0.9rem;
   color: var(--secondText-color);
   @extend .reusable-text-ellipsis;
+}
+
+.orgCardText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: block;
+  flex-direction: column;
+}
+
+.orgAvatarContainer {
+  width: 52px;
+  height: 52px;
+}
+
+.orgContainer {
+  border: none;
+  height: 52px;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 16px 0px 0px 16px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background-color: var(--LeftDrawer-org-profileContainer-bg) !important;
+}
+
+.orgRightConatiner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+  margin-left: 10px;
+}
+
+.orgImageContainer {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  flex-shrink: 0;
+}
+
+.orgImageContainer img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 /* -- ProfileDropdown.tsx -- */

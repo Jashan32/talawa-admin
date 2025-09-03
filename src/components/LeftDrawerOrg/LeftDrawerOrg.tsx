@@ -267,10 +267,10 @@ const leftDrawerOrg = ({
           ) : (
             <button
               type="button"
-              className={styles.profileContainer}
+              className={styles.orgContainer}
               data-testid="OrgBtn"
             >
-              <div className={styles.imageContainer}>
+              <div className={styles.orgImageContainer}>
                 {data.organization.avatarURL ? (
                   <img
                     crossOrigin="anonymous"
@@ -283,14 +283,16 @@ const leftDrawerOrg = ({
                 ) : (
                   <Avatar
                     name={data.organization.name}
-                    containerStyle={styles.avatarContainer}
+                    containerStyle={styles.orgAvatarContainer}
                     alt={`${data.organization.name} Picture`}
                   />
                 )}
               </div>
-              <div className={styles.ProfileRightConatiner}>
-                <div className={styles.profileText}>
-                  <span className={styles.primaryText}>
+              <div className={styles.orgRightConatiner}>
+                <div className={`${styles.profileText} `}>
+                  <span
+                    className={`${styles.primaryText} ${styles.orgCardText}`}
+                  >
                     {data.organization.name}
                   </span>
                   <span className={styles.secondaryText}>
