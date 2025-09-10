@@ -64,6 +64,7 @@ import {
   TextField,
 } from '@mui/material';
 import { USER_DETAILS } from 'GraphQl/Queries/Queries';
+import useLocalStorage from 'utils/useLocalstorage';
 
 export interface InterfacePledgeModal {
   isOpen: boolean;
@@ -89,6 +90,9 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
   // Translation functions to support internationalization
   const { t } = useTranslation('translation', { keyPrefix: 'pledges' });
   const { t: tCommon } = useTranslation('common');
+  const { getItem } = useLocalStorage();
+  const role = getItem('role');
+  console.log(pledge?.pledger.name);
 
   // State to manage the form inputs for the pledge
   const [formState, setFormState] = useState<InterfaceCreatePledge>({
@@ -111,6 +115,7 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
   // Effect to update the form state when the pledge prop changes (e.g., when editing a pledge)
   useEffect(() => {
     if (pledge) {
+      console.log(pledge.pledger.name);
       setFormState({
         pledgeUsers: pledge.pledger ? [pledge.pledger] : [],
         pledgeAmount: pledge?.amount ?? 0,
@@ -264,6 +269,7 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
         >
           <Form.Group className="d-flex mb-3 w-100">
             <Autocomplete
+              disabled={role !== 'administrator'}
               multiple
               className={`${styles.noOutline} w-100`}
               limitTags={2}
@@ -274,7 +280,9 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
               isOptionEqualToValue={(option, value) => option.id === value.id}
               filterSelectedOptions={true}
               getOptionLabel={(member: InterfaceUserInfoPG): string =>
-                `${member.firstName} ${member.lastName}`
+                role !== 'administrator'
+                  ? `${pledge?.pledger.name}`
+                  : `${member.firstName} ${member.lastName}`
               }
               onChange={(_, newPledgers): void => {
                 setFormState({ ...formState, pledgeUsers: newPledgers });
@@ -286,6 +294,7 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
           </Form.Group>
           <Form.Group className="d-flex gap-3 mx-auto  mb-3">
             <DatePicker
+              disabled={role !== 'administrator'}
               format="DD/MM/YYYY"
               label={tCommon('startDate')}
               value={dayjs(pledgeStartDate)}
@@ -307,6 +316,7 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
               maxDate={dayjs(endDate)}
             />
             <DatePicker
+              disabled={role !== 'administrator'}
               format="DD/MM/YYYY"
               label={tCommon('endDate')}
               className={styles.noOutline}
@@ -326,6 +336,7 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
                 {t('currency')}
               </InputLabel>
               <Select
+                disabled={role !== 'administrator'}
                 labelId="demo-simple-select-label"
                 value={pledgeCurrency}
                 label={t('currency')}

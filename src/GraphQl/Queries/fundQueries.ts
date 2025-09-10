@@ -149,11 +149,11 @@ export const USER_PLEDGES = gql`
         name
         avatarURL
       }
-      users {
-        id
-        name
-        avatarURL
-      }
+      # users {
+      #   id
+      #   name
+      #   avatarURL
+      # }
       updater {
         id
       }

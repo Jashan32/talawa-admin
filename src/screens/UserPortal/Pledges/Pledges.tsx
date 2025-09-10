@@ -214,6 +214,7 @@ const Pledges = (): JSX.Element => {
                       alt={user.avatarURL}
                       data-testid={`image-pledger-${user.id}`}
                       className={styles.TableImage}
+                      crossOrigin="anonymous"
                     />
                   ) : (
                     <div className={styles.avatarContainer}>
