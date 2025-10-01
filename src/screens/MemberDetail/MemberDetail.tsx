@@ -34,10 +34,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import Button from 'react-bootstrap/Button';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router';
+import { useParams } from 'react-router';
 import styles from 'style/app-fixed.module.css';
-import { UPDATE_CURRENT_USER_MUTATION } from 'GraphQl/Mutations/mutations';
-import { CURRENT_USER } from 'GraphQl/Queries/Queries';
+import {
+  UPDATE_CURRENT_USER_MUTATION,
+  UPDATE_USER,
+} from 'GraphQl/Mutations/mutations';
+import { USER_DETAILS } from 'GraphQl/Queries/Queries';
 import { toast } from 'react-toastify';
 import { languages } from 'utils/languages';
 import { errorHandler } from 'utils/errorHandler';
@@ -63,18 +66,18 @@ import { sanitizeAvatars } from 'utils/sanitizeAvatar';
 
 type MemberDetailProps = { id?: string };
 
-const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
+const MemberDetail: React.FC<MemberDetailProps> = (): JSX.Element => {
   const { t } = useTranslation('translation', { keyPrefix: 'memberDetail' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t: tCommon } = useTranslation('common');
-  const location = useLocation();
   const isMounted = useRef(true);
   const { getItem, setItem } = useLocalStorage();
   const [show, setShow] = useState(false);
   const [isUpdated, setisUpdated] = useState(false);
-  const currentId = location.state?.id || getItem('id') || id;
+  const currentId = getItem('id');
   const originalImageState = React.useRef<string>('');
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+  const { memberId } = useParams<{ orgId: string; memberId: string }>();
 
   document.title = t('title');
 
@@ -103,15 +106,17 @@ const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
   });
 
   // Mutation to update the user details
-  const [updateUser] = useMutation(UPDATE_CURRENT_USER_MUTATION);
-  const { data: userData, loading } = useQuery(CURRENT_USER, {
-    variables: { id: currentId },
+  const [updateUser] = useMutation(UPDATE_USER);
+  const [updateCurrentUser] = useMutation(UPDATE_CURRENT_USER_MUTATION);
+  const { data: userData, loading } = useQuery(USER_DETAILS, {
+    variables: { input: { id: memberId } },
   });
 
   useEffect(() => {
-    if (userData?.currentUser) {
-      setFormState(userData.currentUser);
-      originalImageState.current = userData.currentUser.avatarURL || '';
+    console.log(userData);
+    if (userData?.user) {
+      setFormState(userData.user);
+      originalImageState.current = userData.user.avatarURL || '';
     }
   }, [userData]);
 
@@ -219,23 +224,35 @@ const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
 
     // Update the user details
     try {
-      const { data: updateData } = await updateUser({ variables: { input } });
+      if (memberId == currentId) {
+        const { data: updateData } = await updateCurrentUser({
+          variables: { input: input },
+        });
+        if (updateData && memberId == currentId) {
+          console.log('memberId', memberId);
+          console.log('currentId', currentId);
+          toast.success(
+            tCommon('updatedSuccessfully', { item: 'Profile' }) as string,
+          );
+          setItem('UserImage', updateData.updateCurrentUser.avatarURL);
+          setItem('name', updateData.updateCurrentUser.name);
+          setItem('email', updateData.updateCurrentUser.emailAddress);
+          setItem('id', updateData.updateCurrentUser.id);
+          setItem('role', updateData.updateCurrentUser.role);
+          setSelectedAvatar(null);
 
-      if (updateData) {
-        toast.success(
-          tCommon('updatedSuccessfully', { item: 'Profile' }) as string,
-        );
-        setItem('UserImage', updateData.updateCurrentUser.avatarURL);
-        setItem('name', updateData.updateCurrentUser.name);
-        setItem('email', updateData.updateCurrentUser.emailAddress);
-        setItem('id', updateData.updateCurrentUser.id);
-        setItem('role', updateData.updateCurrentUser.role);
-        setSelectedAvatar(null);
-
-        // wait for the toast to complete
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        window.location.reload();
+          // wait for the toast to complete
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+      } else {
+        const { data: updateData } = await updateUser({
+          variables: { input: { ...input, id: memberId } },
+        });
+        if (updateData) {
+          window.location.reload(); // wait for the toast to complete
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          window.location.reload();
+        }
       }
     } catch (error: unknown) {
       errorHandler(t, error);
@@ -505,7 +522,7 @@ const MemberDetail: React.FC<MemberDetailProps> = ({ id }): JSX.Element => {
                   </label>
                   <input
                     id="email"
-                    value={userData?.currentUser?.emailAddress}
+                    value={userData?.user?.emailAddress}
                     className={`form-control ${styles.inputColor}`}
                     type="email"
                     name="email"

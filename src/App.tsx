@@ -251,7 +251,10 @@ function App(): React.ReactElement {
                 path="orgtags/:orgId/subTags/:tagId"
                 element={<SubTags />}
               />
-              <Route path="/member/:orgId" element={<MemberDetail />} />
+              <Route
+                path="/member/:orgId/:memberId"
+                element={<MemberDetail />}
+              />
               <Route
                 path="/orgevents/:orgId"
                 element={<OrganizationEvents />}

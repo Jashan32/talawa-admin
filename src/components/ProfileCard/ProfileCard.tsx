@@ -105,10 +105,11 @@ const ProfileCard = (): React.JSX.Element => {
         <button
           className={styles.chevronRightbtn}
           data-testid="profileBtn"
-          onClick={() =>
-            userRole === 'User'
-              ? navigate(`/user/settings`)
-              : navigate(`/member/${orgId || ''}`)
+          onClick={
+            () =>
+              userRole === 'User'
+                ? navigate(`/user/settings`)
+                : navigate(`/member/${orgId}/${getItem('id')}`) // Navigate to member detail page for Admins
           }
         >
           <ChevronRightIcon className={styles.chevronIcon} />
