@@ -93,6 +93,7 @@ export const ORGANIZATION_POST_LIST_WITH_VOTES = gql`
               hasVoted
               voteType
             }
+            attachmentURL
             id
             caption
             commentsCount

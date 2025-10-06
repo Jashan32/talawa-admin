@@ -2127,6 +2127,7 @@ export interface InterfacePostCard {
     name: string;
     avatarURL?: string | null;
   };
+  attachmentURL?: string,
   hasUserVoted: VoteState;
   postedAt: string;
   pinnedAt?: string | null;

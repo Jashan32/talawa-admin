@@ -103,6 +103,7 @@ export type PostNode = {
   caption: string | null;
   createdAt: string;
   commentCount: number;
+  attachmentURL?: string,
   creator: {
     id: string;
     name: string;

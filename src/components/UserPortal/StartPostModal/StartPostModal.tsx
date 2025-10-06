@@ -46,7 +46,7 @@ interface InterfaceStartPostModalProps {
   fetchPosts: () => void;
   userData: InterfaceQueryUserListItem | undefined;
   organizationId: string;
-  img: string | null;
+  img: File | null;
 }
 
 const startPostModal = ({
@@ -100,50 +100,7 @@ const startPostModal = ({
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
-
-  const getMimeTypeEnum = (url: string): string => {
-    // Check for base64 data URI
-    if (url.startsWith('data:')) {
-      const mime = url.split(';')[0].split(':')[1]; // e.g., "image/png"
-      switch (mime) {
-        case 'image/jpeg':
-          return 'IMAGE_JPEG';
-        case 'image/png':
-          return 'IMAGE_PNG';
-        case 'image/webp':
-          return 'IMAGE_WEBP';
-        case 'image/avif':
-          return 'IMAGE_AVIF';
-        case 'video/mp4':
-          return 'VIDEO_MP4';
-        case 'video/webm':
-          return 'VIDEO_WEBM';
-        default:
-          return 'IMAGE_JPEG'; // fallback
-      }
-    }
-
-    // Fallback for file URLs (e.g., https://.../file.png)
-    const ext = url.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'jpg':
-      case 'jpeg':
-        return 'IMAGE_JPEG';
-      case 'png':
-        return 'IMAGE_PNG';
-      case 'webp':
-        return 'IMAGE_WEBP';
-      case 'avif':
-        return 'IMAGE_AVIF';
-      case 'mp4':
-        return 'VIDEO_MP4';
-      case 'webm':
-        return 'VIDEO_WEBM';
-      default:
-        return 'IMAGE_JPEG'; // fallback
-    }
-  };
-
+  
   const handlePost = async (): Promise<void> => {
     try {
       if (!postContent) {
@@ -152,31 +109,16 @@ const startPostModal = ({
 
       toast.info('Processing your post. Please wait.');
 
-      let attachment = null;
-
-      if (img) {
-        const mimeType = getMimeTypeEnum(img);
-        const fileName = img.split('/').pop() || 'attachment';
-        const fileHash = await getFileHashFromBase64(img);
-
-        attachment = {
-          fileHash,
-          mimetype: mimeType,
-          name: fileName,
-          objectName: 'uploads/' + fileName,
-        };
-      }
-
       const { data } = await createPost({
         variables: {
           input: {
             caption: postContent,
             organizationId,
-            attachments: attachment ? [attachment] : [],
+            attachments: undefined,
+            images: [img]
           },
         },
       });
-
       if (data) {
         toast.dismiss();
         toast.success(t('postNowVisibleInFeed') as string);
@@ -236,7 +178,7 @@ const startPostModal = ({
           />
           {img && (
             <div className={styles.previewImage}>
-              <Image src={img} alt="Post Image Preview" />
+              <Image src={URL.createObjectURL(img)} alt="Post Image Preview" />
             </div>
           )}
         </Modal.Body>

@@ -105,7 +105,7 @@ export default function Home(): JSX.Element {
   const [before, setBefore] = useState<string | null | undefined>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [postImg, setPostImg] = useState<string | null>('');
+  const [postImg, setPostImg] = useState<File | null>(null);
   const [displayPosts, setDisplayPosts] = useState<InterfacePostCard[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
@@ -187,7 +187,7 @@ export default function Home(): JSX.Element {
       upVotesCount,
       downVotesCount,
       comments,
-      // attachments,
+      attachmentURL,
       pinnedAt,
       hasUserVoted,
     } = node;
@@ -215,6 +215,7 @@ export default function Home(): JSX.Element {
       hasUserVoted: hasUserVoted,
       upVoteCount: upVotesCount,
       downVoteCount: downVotesCount,
+      attachmentURL: attachmentURL,
 
       comments:
         comments?.edges?.map(({ node: comment }) => ({
@@ -269,20 +270,9 @@ export default function Home(): JSX.Element {
     setShowPinnedPostModal(true);
   };
 
-  // const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-
   const handlePostButtonClick = (): void => {
     setShowModal(true);
   };
-
-  // const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (file) {
-  //     const imgURL = URL.createObjectURL(file);
-  //     setPostImg(imgURL);
-  //     setShowModal(true); // open modal after selecting image
-  //   }
-  // };
 
   return (
     <div className={postStyles.instagramContainer}>
@@ -342,11 +332,11 @@ export default function Home(): JSX.Element {
                 onChange={async (
                   e: React.ChangeEvent<HTMLInputElement>,
                 ): Promise<void> => {
-                  setPostImg('');
+                  setPostImg(null);
                   const target = e.target as HTMLInputElement;
                   const file = target.files && target.files[0];
                   const base64file = file && (await convertToBase64(file));
-                  setPostImg(base64file);
+                  setPostImg(file);
                 }}
               />
             </Col>
