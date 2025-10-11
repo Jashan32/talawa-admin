@@ -47,7 +47,6 @@ const dashBoardCard = (props: {
           </Col>
           <Col className={`${styles.contentCol}`}>
             <span className={`${styles.cardBodyNumber}`}>{count ?? 0}</span>
-            &nbsp;
             <span className={styles.cardBodySecondaryText}>{title}</span>
           </Col>
         </Row>
