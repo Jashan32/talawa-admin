@@ -13,10 +13,18 @@ import type { Location } from '@remix-run/router';
 
 afterEach(() => {
   vi.resetModules();
+  vi.clearAllMocks();
 });
 
 const currentLocation: Location = {
   pathname: '/orgstore',
+  state: {},
+  key: '',
+  search: '',
+  hash: '',
+};
+const currentLocation2: Location = {
+  pathname: '/diffpath',
   state: {},
   key: '',
   search: '',
@@ -49,6 +57,11 @@ const props: InterfaceCollapsibleDropdown = {
         url: '/sub-category-2',
         icon: 'fa fa-home',
       },
+      {
+        name: '',
+        url: '/sub-category-2',
+        icon: 'fa fa-home',
+      },
     ],
   },
 };
@@ -67,6 +80,44 @@ describe('Testing CollapsibleDropdown component', () => {
     expect(screen.getByText('DropDown Category')).toBeInTheDocument();
     expect(screen.getByText('SubCategory 1')).toBeInTheDocument();
     expect(screen.getByText('SubCategory 2')).toBeInTheDocument();
+  });
+
+  test('when currentLocation has path name which does not contain orgstore', async () => {
+    // Re-mock react-router with currentLocation2
+    vi.doMock('react-router', async (importOriginal) => {
+      const mod = (await importOriginal()) as object;
+      return {
+        ...mod,
+        useLocation: () => currentLocation2,
+      };
+    });
+
+    // Dynamically import the component after mocking
+    const { default: CollapsibleDropdownMocked } = await import(
+      './CollapsibleDropdown'
+    );
+
+    render(
+      <BrowserRouter>
+        <Provider store={store}>
+          <I18nextProvider i18n={i18nForTest}>
+            <CollapsibleDropdownMocked {...props} />
+          </I18nextProvider>
+        </Provider>
+      </BrowserRouter>,
+    );
+
+    // Verify that the component renders correctly with different pathname
+    expect(screen.getByText('DropDown Category')).toBeInTheDocument();
+    expect(screen.getByText('SubCategory 1')).toBeInTheDocument();
+    expect(screen.getByText('SubCategory 2')).toBeInTheDocument();
+
+    // Verify that the dropdown button has inactive styling when not in orgstore path
+    const parentDropdownBtn = screen.getByTestId('collapsible-dropdown');
+    expect(parentDropdownBtn).toBeInTheDocument();
+
+    // Since the location doesn't include 'orgstore', setShowDropdown should be called with false
+    expect(props.setShowDropdown).toHaveBeenCalledWith(false);
   });
 
   test('Dropdown should be rendered and functioning correctly', () => {
