@@ -13,6 +13,16 @@ const DUMMY_QUERY: DocumentNode = gql`
   }
 `;
 
+// Custom operation interface that allows null variables for testing edge cases
+interface TestInterfaceOperationWithNullVars {
+  query: DocumentNode;
+  variables: Record<string, null> | null;
+  operationName: string;
+  extensions: Record<string, null>;
+  setContext: Operation['setContext'];
+  getContext: Operation['getContext'];
+}
+
 describe('Date Time Middleware Tests', () => {
   describe('Request Middleware', () => {
     it('should convert local date and time to UTC format in request variables', () => {
@@ -220,6 +230,75 @@ describe('Date Time Middleware Tests', () => {
           error: reject,
         });
       }).then(() => {
+        expect(forward).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Middleware edge case handling', () => {
+    it('should handle response without data property in response middleware', () => {
+      const testResponse: FetchResult = {
+        extensions: {},
+        context: {},
+        // No data property
+      };
+
+      const operation: Operation = {
+        query: DUMMY_QUERY,
+        operationName: 'GetDummyData',
+        variables: {},
+        getContext: vi.fn(() => ({})),
+        setContext: vi.fn(),
+        extensions: {},
+      };
+
+      const forward = vi.fn(
+        () =>
+          new Observable<FetchResult>((observer) => {
+            observer.next(testResponse);
+            observer.complete();
+          }),
+      );
+
+      const observable = responseMiddleware.request(operation, forward);
+      expect(observable).not.toBeNull();
+      return new Promise<void>((resolve, reject) => {
+        observable?.subscribe({
+          next: (response: FetchResult) => {
+            expect(response.data).toBeUndefined();
+            resolve();
+          },
+          error: reject,
+        });
+      }).then(() => {
+        expect(forward).toHaveBeenCalled();
+      });
+    });
+
+    it('should handle variables as null completely', () => {
+      const operation: TestInterfaceOperationWithNullVars = {
+        query: DUMMY_QUERY,
+        operationName: 'GetDummyData',
+        variables: null,
+        getContext: vi.fn(() => ({})),
+        setContext: vi.fn(),
+        extensions: {},
+      };
+
+      const forward = vi.fn(
+        (op) =>
+          new Observable<FetchResult>((observer) => {
+            expect(op.variables).toBeNull();
+            observer.complete();
+          }),
+      );
+
+      const observable = requestMiddleware.request(
+        operation as Operation,
+        forward,
+      );
+      expect(observable).not.toBeNull();
+      observable?.subscribe(() => {
         expect(forward).toHaveBeenCalled();
       });
     });
