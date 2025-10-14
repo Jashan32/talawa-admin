@@ -359,6 +359,101 @@ describe('Testing Forgot Password screen', () => {
     });
   });
 
+  it('Testing when forgotPassword returns undefined data', async () => {
+    const testMocks = [
+      {
+        request: {
+          query: GENERATE_OTP_MUTATION,
+          variables: {
+            email: 'johndoe@gmail.com',
+          },
+        },
+        result: {
+          data: {
+            otp: {
+              otpToken: 'lorem ipsum',
+            },
+          },
+        },
+      },
+      {
+        request: {
+          query: FORGOT_PASSWORD_MUTATION,
+          variables: {
+            otpToken: 'lorem ipsum',
+            userOtp: '12345',
+            newPassword: 'johnDoe@12345',
+          },
+        },
+        result: {
+          data: null,
+        },
+      },
+    ];
+
+    const formData = {
+      userOtp: '12345',
+      newPassword: 'johnDoe@12345',
+      confirmNewPassword: 'johnDoe@12345',
+      email: 'johndoe@gmail.com',
+    };
+
+    // Clear previous toast calls
+    vi.clearAllMocks();
+
+    render(
+      <MockedProvider addTypename={false} mocks={testMocks}>
+        <BrowserRouter>
+          <Provider store={store}>
+            <I18nextProvider i18n={i18n}>
+              <ForgotPassword />
+            </I18nextProvider>
+          </Provider>
+        </BrowserRouter>
+      </MockedProvider>,
+    );
+
+    await wait();
+
+    // First, get OTP
+    await userEvent.type(
+      screen.getByPlaceholderText(/Registered email/i),
+      formData.email,
+    );
+
+    await userEvent.click(screen.getByText('Get OTP'));
+    await wait();
+
+    // Clear mocks after OTP is sent to focus only on forgot password behavior
+    vi.clearAllMocks();
+
+    // Now fill in the forgot password form
+    await userEvent.type(
+      screen.getByPlaceholderText('e.g. 12345'),
+      formData.userOtp,
+    );
+    await userEvent.type(
+      screen.getByTestId('newPassword'),
+      formData.newPassword,
+    );
+    await userEvent.type(
+      screen.getByTestId('confirmNewPassword'),
+      formData.confirmNewPassword,
+    );
+
+    // Submit the form - this should trigger the mutation with null data
+    await userEvent.click(screen.getByText('Change Password'));
+    await wait();
+
+    // When data is null/undefined, the component should not show success message
+    expect(toast.success).not.toHaveBeenCalledWith(
+      translations.passwordChanges,
+    );
+
+    // Verify that the form is still in the password reset state (not back to email input)
+    expect(screen.getByPlaceholderText('e.g. 12345')).toBeInTheDocument();
+  });
+
   it('Testing forgot password functionality, when there is an error except unregistered email and api failure', async () => {
     const formData = {
       email: 'testuser@test.com',
