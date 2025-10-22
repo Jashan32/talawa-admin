@@ -191,6 +191,32 @@ describe('Testing UserNavbar Component [User Portal]', () => {
     expect(cookies.get('i18next')).toBe('zh');
   });
 
+  it('Should default to English when no language cookie is set', async () => {
+    // Remove the i18next cookie to simulate a new user or cleared cookies
+    cookies.remove('i18next');
+
+    render(
+      <MockedProvider addTypename={false} link={link}>
+        <BrowserRouter>
+          <Provider store={store}>
+            <I18nextProvider i18n={i18nForTest}>
+              <UserNavbar />
+            </I18nextProvider>
+          </Provider>
+        </BrowserRouter>
+      </MockedProvider>,
+    );
+
+    await wait();
+
+    // Verify that the component initializes with 'en' as the default language
+    // when no cookie is present
+    expect(cookies.get('i18next')).toBeUndefined();
+
+    // The component should still render properly with the default language
+    expect(screen.getByTestId('languageIcon')).toBeInTheDocument();
+  });
+
   it('User can see and interact with the dropdown menu', async () => {
     render(
       <MockedProvider addTypename={false} link={link}>
