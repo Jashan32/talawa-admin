@@ -557,4 +557,58 @@ describe('CampaignModal', () => {
       expect(toast.success).toHaveBeenCalledWith(translations.updatedCampaign);
     });
   });
+
+  it('should use default values when campaign fields are undefined', async () => {
+    const UPDATE_GOAL_ONLY_MOCK = [
+      {
+        request: {
+          query: UPDATE_CAMPAIGN_MUTATION,
+          variables: {
+            input: {
+              id: 'campaignId1',
+              goalAmount: 500,
+            },
+          },
+        },
+        result: {
+          data: {
+            updateFundCampaign: {
+              id: 'campaignId1',
+            },
+          },
+        },
+      },
+    ];
+
+    const goalOnlyMockLink = new StaticMockLink(UPDATE_GOAL_ONLY_MOCK);
+
+    const editProps = {
+      ...campaignProps[1],
+      campaign: {
+        id: 'campaignId1',
+        name: undefined,
+        goalAmount: undefined,
+        startAt: undefined,
+        endAt: undefined,
+        currencyCode: undefined,
+        createdAt: '2021-01-01T00:00:00.000Z',
+      },
+    };
+
+    renderCampaignModal(goalOnlyMockLink, editProps);
+
+    // Submit the form
+    const submitBtn = screen.getByTestId('submitCampaignBtn');
+    fireEvent.click(submitBtn);
+
+    expect(screen.getByLabelText('Campaign Name')).toHaveValue('');
+    expect(screen.getByLabelText('Funding Goal')).toHaveValue('0');
+    expect(screen.getByLabelText('End Date')).toHaveValue(
+      new Date().toLocaleDateString('en-GB'),
+    );
+    expect(screen.getByLabelText('Start Date')).toHaveValue(
+      new Date().toLocaleDateString('en-GB'),
+    );
+    expect(screen.getByLabelText('Currency')).toHaveTextContent('USD ($)');
+  });
 });

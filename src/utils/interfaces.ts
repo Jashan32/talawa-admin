@@ -1814,12 +1814,12 @@ export interface InterfaceFundInfo {
  */
 export interface InterfaceCampaignInfo {
   id: string;
-  name: string;
-  goalAmount: number;
-  startAt: Date;
-  endAt: Date;
+  name: string | undefined;
+  goalAmount: number | undefined;
+  startAt: Date | undefined;
+  endAt: Date | undefined;
   createdAt: string;
-  currencyCode: string;
+  currencyCode: string | undefined;
 }
 /**
  * @interface InterfacePledgeInfo
