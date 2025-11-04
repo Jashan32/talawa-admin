@@ -94,53 +94,36 @@ const PLEDGE_MODAL_MOCKS = [
     request: {
       query: USER_DETAILS,
       variables: {
-        id: 'userId',
+        input: {
+          id: 'userId',
+        },
       },
     },
     result: {
       data: {
         user: {
-          user: {
-            _id: 'userId',
-            joinedOrganizations: [
-              {
-                _id: '6537904485008f171cf29924',
-                __typename: 'Organization',
-              },
-            ],
-            firstName: 'Harve',
-            lastName: 'Lance',
-            email: 'testuser1@example.com',
-            image: null,
-            createdAt: '2023-04-13T04:53:17.742Z',
-            birthDate: null,
-            educationGrade: null,
-            employmentStatus: null,
-            gender: null,
-            maritalStatus: null,
-            phone: null,
-            address: {
-              line1: 'Line1',
-              countryCode: 'CountryCode',
-              city: 'CityName',
-              state: 'State',
-              __typename: 'Address',
-            },
-            registeredEvents: [],
-            membershipRequests: [],
-            __typename: 'User',
-          },
-          appUserProfile: {
-            _id: '67078abd85008f171cf2991d',
-            adminFor: [],
-            isSuperAdmin: false,
-            appLanguageCode: 'en',
-            createdOrganizations: [],
-            createdEvents: [],
-            eventAdmin: [],
-            __typename: 'AppUserProfile',
-          },
-          __typename: 'UserData',
+          id: 'userId',
+          name: 'Harve Lance',
+          emailAddress: 'testuser1@example.com',
+          avatarURL: null,
+          birthDate: null,
+          city: 'CityName',
+          countryCode: 'CountryCode',
+          createdAt: '2023-04-13T04:53:17.742Z',
+          updatedAt: '2023-04-13T04:53:17.742Z',
+          educationGrade: null,
+          employmentStatus: null,
+          isEmailAddressVerified: false,
+          maritalStatus: null,
+          natalSex: null,
+          naturalLanguageCode: 'en',
+          postalCode: null,
+          role: 'USER',
+          state: 'State',
+          mobilePhoneNumber: null,
+          homePhoneNumber: null,
+          workPhoneNumber: null,
+          __typename: 'User',
         },
       },
     },
@@ -155,8 +138,21 @@ const PLEDGE_MODAL_MOCKS = [
     },
     result: {
       data: {
-        updateFundraisingCampaignPledge: {
-          _id: '1',
+        updateFundCampaignPledge: {
+          id: '1',
+          amount: 200,
+          note: null,
+          campaign: {
+            id: 'campaignId',
+            name: 'Test Campaign',
+            __typename: 'FundCampaign',
+          },
+          pledger: {
+            id: '1',
+            name: 'John Doe',
+            __typename: 'User',
+          },
+          __typename: 'FundCampaignPledge',
         },
       },
     },
@@ -168,18 +164,56 @@ const PLEDGE_MODAL_MOCKS = [
         campaignId: 'campaignId',
         amount: 200,
         currency: 'USD',
-        startDate: '2024-01-02',
-        endDate: '2024-01-02',
-        userIds: ['1'],
+        startDate: '2024-01-01',
+        endDate: '2024-01-01',
+        userIds: ['userId'],
       },
     },
     result: {
       data: {
-        createFundraisingCampaignPledge: {
-          _id: '3',
+        createFundCampaignPledge: {
+          id: '3',
+          amount: 200,
+          note: null,
+          campaign: {
+            id: 'campaignId',
+            name: 'Test Campaign',
+            __typename: 'FundCampaign',
+          },
+          pledger: {
+            id: 'userId',
+            name: 'Harve Lance',
+            __typename: 'User',
+          },
+          __typename: 'FundCampaignPledge',
         },
       },
     },
+  },
+  // Error mocks
+  {
+    request: {
+      query: UPDATE_PLEDGE,
+      variables: {
+        id: '1',
+        amount: 150,
+      },
+    },
+    error: new Error('Failed to update pledge'),
+  },
+  {
+    request: {
+      query: CREATE_PLEDGE,
+      variables: {
+        campaignId: 'campaignId',
+        amount: 100,
+        currency: 'USD',
+        startDate: '2024-01-01',
+        endDate: '2024-01-01',
+        userIds: ['userId'],
+      },
+    },
+    error: new Error('Failed to create pledge'),
   },
 ];
 
@@ -193,7 +227,7 @@ const renderPledgeModal = (
   props: InterfacePledgeModal,
 ): RenderResult => {
   return render(
-    <MockedProvider link={link} addTypename={false}>
+    <MockedProvider link={link}>
       <Provider store={store}>
         <BrowserRouter>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -285,17 +319,63 @@ describe('PledgeModal', () => {
     expect(pledgeProps[1].pledge?.endDate).toEqual('2024-01-10');
   });
 
-  it('should create pledge', async () => {
+  it('should update currency when currency select value changes', async () => {
+    renderPledgeModal(link1, pledgeProps[1]);
+    const currencySelect = screen
+      .getByTestId('currencySelect')
+      .querySelector('input') as HTMLInputElement;
+    expect(currencySelect).toHaveValue('USD');
+  });
+
+  it('should close modal when close button is clicked', async () => {
     renderPledgeModal(link1, pledgeProps[0]);
+    const closeButton = screen.getByTestId('pledgeModalCloseBtn');
+    fireEvent.click(closeButton);
+    expect(pledgeProps[0].hide).toHaveBeenCalled();
+  });
+
+  it('should handle pledger selection in create mode', async () => {
+    renderPledgeModal(link1, pledgeProps[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('pledgerSelect')).toBeInTheDocument();
+    });
+  });
+
+  it('should update pledge successfully', async () => {
+    renderPledgeModal(link1, pledgeProps[1]);
+
+    await waitFor(() => {
+      expect(screen.getByText(translations.editPledge)).toBeInTheDocument();
+    });
 
     fireEvent.change(screen.getByLabelText('Amount'), {
       target: { value: '200' },
     });
-    fireEvent.change(screen.getByLabelText('Start Date'), {
-      target: { value: '02/01/2024' },
+
+    const form = screen.getByTestId('pledgeForm');
+    fireEvent.submit(form);
+
+    await waitFor(
+      () => {
+        expect(toast.success).toHaveBeenCalledWith(translations.pledgeUpdated);
+      },
+      { timeout: 2000 },
+    );
+
+    expect(pledgeProps[1].refetchPledge).toHaveBeenCalled();
+    expect(pledgeProps[1].hide).toHaveBeenCalled();
+  });
+
+  it('should Update pledge', async () => {
+    renderPledgeModal(link1, pledgeProps[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('pledgerSelect')).toBeInTheDocument();
     });
-    fireEvent.change(screen.getByLabelText('End Date'), {
-      target: { value: '02/01/2024' },
+
+    fireEvent.change(screen.getByLabelText('Amount'), {
+      target: { value: '200' },
     });
 
     // Submit the form
@@ -304,12 +384,78 @@ describe('PledgeModal', () => {
 
     await waitFor(
       () => {
-        expect(toast.success).toHaveBeenCalledWith(translations.pledgeCreated);
+        expect(toast.success).toHaveBeenCalledWith(translations.pledgeUpdated);
       },
       { timeout: 2000 },
     );
+  });
 
-    expect(pledgeProps[0].refetchPledge).toHaveBeenCalled();
-    expect(pledgeProps[0].hide).toHaveBeenCalled();
+  it('should update pledge with multiple field changes', async () => {
+    const multiFieldUpdateMock = {
+      request: {
+        query: UPDATE_PLEDGE,
+        variables: {
+          id: '1',
+          amount: 300,
+          currency: 'EUR',
+          startDate: '2024-02-01',
+          endDate: '2024-02-15',
+        },
+      },
+      result: {
+        data: {
+          updateFundCampaignPledge: {
+            id: '1',
+            amount: 300,
+            note: null,
+            campaign: {
+              id: 'campaignId',
+              name: 'Test Campaign',
+              __typename: 'FundCampaign',
+            },
+            pledger: {
+              id: '1',
+              name: 'John Doe',
+              __typename: 'User',
+            },
+            __typename: 'FundCampaignPledge',
+          },
+        },
+      },
+    };
+
+    const extendedMocks = [...PLEDGE_MODAL_MOCKS, multiFieldUpdateMock];
+    const link = new StaticMockLink(extendedMocks);
+
+    renderPledgeModal(link, pledgeProps[1]);
+
+    await waitFor(() => {
+      expect(screen.getByText(translations.editPledge)).toBeInTheDocument();
+    });
+
+    // Change multiple fields
+    fireEvent.change(screen.getByLabelText('Amount'), {
+      target: { value: '300' },
+    });
+
+    // Change start date
+    fireEvent.change(screen.getByLabelText('Start Date'), {
+      target: { value: '01/02/2024' },
+    });
+
+    // Change end date
+    fireEvent.change(screen.getByLabelText('End Date'), {
+      target: { value: '15/02/2024' },
+    });
+
+    const form = screen.getByTestId('pledgeForm');
+    fireEvent.submit(form);
+
+    await waitFor(
+      () => {
+        expect(toast.success).toHaveBeenCalledWith(translations.pledgeUpdated);
+      },
+      { timeout: 3000 },
+    );
   });
 });

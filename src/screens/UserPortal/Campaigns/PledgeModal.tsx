@@ -132,7 +132,7 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
 
   // Query to get the user details based on the userId prop
   const { data: userData } = useQuery(USER_DETAILS, {
-    variables: { id: userId },
+    variables: { input: { id: userId } },
   });
 
   // Effect to update the pledgers state when user data is fetched
@@ -140,11 +140,9 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
     if (userData) {
       setPledgers([
         {
-          id: userData.user.user._id,
-          firstName: userData.user.user.firstName,
-          lastName: userData.user.user.lastName,
-          name: `${userData.user.user.firstName} ${userData.user.user.lastName}`,
-          avatarURL: userData.user.user.image,
+          id: userData.user.id,
+          name: userData.user.name,
+          avatarURL: userData.user.avatarURL,
         },
       ]);
     }
@@ -274,7 +272,7 @@ const PledgeModal: React.FC<InterfacePledgeModal> = ({
               isOptionEqualToValue={(option, value) => option.id === value.id}
               filterSelectedOptions={true}
               getOptionLabel={(member: InterfaceUserInfoPG): string =>
-                `${member.firstName} ${member.lastName}`
+                `${member.name}`
               }
               onChange={(_, newPledgers): void => {
                 setFormState({ ...formState, pledgeUsers: newPledgers });
