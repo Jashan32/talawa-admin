@@ -51,6 +51,7 @@ import useLocalStorage from 'utils/useLocalstorage';
 
 const map: InterfaceMapType = {
   organization: 'home',
+  organizations: 'userOrganizations',
   people: 'people',
   events: 'userEvents',
   donate: 'donate',

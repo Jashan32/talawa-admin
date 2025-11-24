@@ -1048,6 +1048,7 @@
     "close": "Fermer"
   },
   "userOrganizations": {
+    "title": "Organisations",
     "allOrganizations": "Toutes les organisations",
     "joinedOrganizations": "Organisations rejointes",
     "createdOrganizations": "Organisations créées",

@@ -30,7 +30,9 @@ const MemberDetail = lazy(() => import('screens/MemberDetail/MemberDetail'));
 const OrgContribution = lazy(
   () => import('screens/OrgContribution/OrgContribution'),
 );
-const OrgList = lazy(() => import('screens/OrgList/OrgList'));
+const SharedOrgList = lazy(
+  () => import('sharedComponents/OrgList/orgList'),
+);
 const OrgPost = lazy(() => import('screens/OrgPost/OrgPost'));
 const OrgSettings = lazy(() => import('screens/OrgSettings/OrgSettings'));
 
@@ -76,9 +78,6 @@ const Transactions = lazy(
 );
 const Events = lazy(() => import('screens/UserPortal/Events/Events'));
 const Posts = lazy(() => import('screens/UserPortal/Posts/Posts'));
-const Organizations = lazy(
-  () => import('screens/UserPortal/Organizations/Organizations'),
-);
 const People = lazy(() => import('screens/UserPortal/People/People'));
 const Settings = lazy(() => import('screens/UserPortal/Settings/Settings'));
 const Chat = lazy(() => import('screens/UserPortal/Chat/Chat'));
@@ -216,7 +215,7 @@ function App(): React.ReactElement {
           <Route path="/admin" element={<LoginPage />} />
           <Route element={<SecuredRoute />}>
             <Route element={<SuperAdminScreen />}>
-              <Route path="/orglist" element={<OrgList />} />
+              <Route path="/orglist" element={<SharedOrgList />} />
               <Route path="/notification" element={<Notification />} />
               <Route path="/member" element={<MemberDetail />} />
               <Route path="/users" element={<Users />} />
@@ -312,7 +311,6 @@ function App(): React.ReactElement {
           />
           {/* User Portal Routes */}
           <Route element={<SecuredRouteForUser />}>
-            <Route path="/user/organizations" element={<Organizations />} />
             <Route path="/user/settings" element={<Settings />} />
             {/* User global plugin routes (no orgId required) */}
             <Route element={<UserGlobalScreen />}>
@@ -331,7 +329,7 @@ function App(): React.ReactElement {
             </Route>
             <Route element={<UserScreen />}>
               <Route path="/user/chat/:orgId" element={<Chat />} />
-              <Route path="/user/organizations" element={<Organizations />} />
+              <Route path="/user/organizations" element={<SharedOrgList />} />
               <Route path="/user/organization/:orgId" element={<Posts />} />
               <Route path="/user/people/:orgId" element={<People />} />
               <Route path="/user/donate/:orgId" element={<Donate />} />

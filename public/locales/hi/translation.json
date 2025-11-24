@@ -1048,6 +1048,7 @@
     "close": "बंद करें"
   },
   "userOrganizations": {
+    "title": "संगठन",
     "allOrganizations": "सभी संगठन",
     "joinedOrganizations": "संगठनों से जुड़े",
     "createdOrganizations": "संगठन बनाये",

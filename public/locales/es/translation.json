@@ -1048,6 +1048,7 @@
     "close": "Cerca"
   },
   "userOrganizations": {
+    "title": "Organizaciones",
     "allOrganizations": "Todas las organizaciones",
     "joinedOrganizations": "Organizaciones unidas",
     "createdOrganizations": "Organizaciones creadas",
