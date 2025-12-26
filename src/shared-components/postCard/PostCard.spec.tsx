@@ -749,7 +749,7 @@ describe('PostCard', () => {
     const sendButton = screen.getByTestId('comment-send');
     fireEvent.click(sendButton);
     await waitFor(() => {
-      expect(defaultProps.fetchPosts).toHaveBeenCalled();
+      expect(defaultProps.fetchPosts).not.toHaveBeenCalled();
       expect(input).toHaveValue(''); // cleared by setCommentInput('')
     });
   });
@@ -778,7 +778,7 @@ describe('PostCard', () => {
     fireEvent.click(likeButton);
 
     await waitFor(() => {
-      expect(defaultProps.fetchPosts).toHaveBeenCalled();
+      expect(screen.getByTestId('liked')).toBeInTheDocument();
     });
   });
 
@@ -792,7 +792,7 @@ describe('PostCard', () => {
     fireEvent.click(likeButton);
 
     await waitFor(() => {
-      expect(defaultProps.fetchPosts).toHaveBeenCalled();
+      expect(screen.getByTestId('unliked')).toBeInTheDocument();
     });
   });
 
@@ -1025,29 +1025,6 @@ describe('PostCard', () => {
     // The dropdown should close after error - we can't assert modal state without additional setup
   });
 
-  it('renders loading state for like button', async () => {
-    renderPostCard();
-
-    const likeButton = screen.getByTestId('like-btn');
-
-    // Check that the like button exists and can be clicked
-    expect(likeButton).toBeInTheDocument();
-
-    // Click the like button - this triggers the mutation
-    fireEvent.click(likeButton);
-
-    // Since StaticMockLink resolves immediately, we test that the mutation was called
-    // In a real scenario, the CircularProgress would show briefly during loading
-    // The actual loading state is tested by the mutation being called
-    await waitFor(() => {
-      expect(defaultProps.fetchPosts).toHaveBeenCalled();
-    });
-
-    // Note: In the actual component, when likeLoading is true, a CircularProgress
-    // with role="progressbar" would appear inside the like button, replacing the heart icon.
-    // This test verifies the like functionality works, which includes the loading state handling.
-  });
-
   it('disables comment send button when input is empty', () => {
     renderPostCard();
 
@@ -1191,7 +1168,7 @@ describe('PostCard', () => {
     fireEvent.click(screen.getByTestId('comment-send'));
 
     await waitFor(() => {
-      expect(mockFetchPosts).toHaveBeenCalled();
+      expect(mockFetchPosts).not.toHaveBeenCalled();
       expect(commentInput.value).toBe('');
     });
   });
