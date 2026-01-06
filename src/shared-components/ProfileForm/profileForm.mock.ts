@@ -3,7 +3,10 @@ import utc from 'dayjs/plugin/utc';
 
 dayjs.extend(utc);
 
-import { UPDATE_CURRENT_USER_MUTATION } from 'GraphQl/Mutations/mutations';
+import {
+  UPDATE_CURRENT_USER_MUTATION,
+  UPDATE_USER,
+} from 'GraphQl/Mutations/mutations';
 import { UNASSIGN_USER_TAG } from 'GraphQl/Mutations/TagMutations';
 import { USER_DETAILS } from 'GraphQl/Queries/Queries';
 
@@ -114,6 +117,45 @@ export const MOCKS1 = [
           isEmailAddressVerified: false,
           avatarURL: 'http://example.com/avatar.jpg',
           avatarMimeType: 'image/jpeg',
+        },
+      },
+    },
+  },
+  {
+    request: {
+      query: UPDATE_USER,
+      variables: {
+        input: expect.any(Object),
+      },
+    },
+    result: {
+      data: {
+        updateUser: {
+          addressLine1: 'Line 1',
+          addressLine2: 'Line 2',
+          avatarMimeType: 'image/jpeg',
+          avatarURL: 'http://example.com/avatar.jpg',
+          birthDate: '',
+          city: 'city',
+          countryCode: 'in',
+          createdAt: dayjs().add(1, 'year').month(1).toISOString(),
+          description: 'This is a description',
+          educationGrade: 'grade_8',
+          emailAddress: 'test221@gmail.com',
+          employmentStatus: 'full_time',
+          homePhoneNumber: '+9999999998',
+          id: 'rishav-jha-mech',
+          isEmailAddressVerified: false,
+          maritalStatus: 'engaged',
+          mobilePhoneNumber: '+9999999999',
+          name: 'New Name',
+          natalSex: 'male',
+          naturalLanguageCode: 'en',
+          postalCode: '111111',
+          role: 'administrator',
+          state: 'State1',
+          updatedAt: dayjs.utc().toISOString(),
+          workPhoneNumber: '+9999999998',
         },
       },
     },
@@ -262,6 +304,128 @@ export const ERROR_MOCK = [
   {
     request: {
       query: UPDATE_CURRENT_USER_MUTATION,
+      variables: {
+        input: {
+          name: 'Test User',
+        },
+      },
+    },
+    error: new Error('Failed to update user'),
+  },
+];
+
+export const UPDATE_USER_SUCCESS_MOCK = [
+  {
+    request: {
+      query: UPDATE_USER,
+      variables: {
+        input: expect.any(Object),
+      },
+    },
+    result: {
+      data: {
+        updateUser: {
+          addressLine1: 'Updated Line 1',
+          addressLine2: 'Updated Line 2',
+          avatarMimeType: 'image/jpeg',
+          avatarURL: 'http://example.com/updated-avatar.jpg',
+          birthDate: '1990-01-01',
+          city: 'Updated City',
+          countryCode: 'us',
+          createdAt: dayjs().subtract(1, 'year').toISOString(),
+          description: 'Updated description',
+          educationGrade: 'grade_12',
+          emailAddress: 'updated@example.com',
+          employmentStatus: 'full_time',
+          homePhoneNumber: '+1234567890',
+          id: 'rishav-jha-mech',
+          isEmailAddressVerified: true,
+          maritalStatus: 'married',
+          mobilePhoneNumber: '+9876543210',
+          name: 'Updated Rishav Jha',
+          natalSex: 'male',
+          naturalLanguageCode: 'en',
+          postalCode: '12345',
+          role: 'administrator',
+          state: 'Updated State',
+          updatedAt: dayjs().toISOString(),
+          workPhoneNumber: '+1111111111',
+        },
+      },
+    },
+  },
+];
+
+export const UPDATE_USER_ERROR_MOCK = [
+  {
+    request: {
+      query: UPDATE_USER,
+      variables: {
+        input: expect.any(Object),
+      },
+    },
+    error: new Error('Failed to update user profile'),
+  },
+];
+
+export const UPDATE_USER_ERROR_MOCKS = [
+  {
+    request: {
+      query: USER_DETAILS,
+      variables: {
+        input: {
+          id: '456',
+        },
+      },
+    },
+    result: {
+      data: {
+        user: {
+          addressLine1: 'Line 1',
+          addressLine2: 'Line 2',
+          avatarMimeType: 'image/jpeg',
+          avatarURL: 'http://example.com/avatar.jpg',
+          birthDate: '',
+          city: 'city',
+          countryCode: 'in',
+          createdAt: dayjs().add(1, 'year').month(1).toISOString(),
+          description: 'This is a description',
+          educationGrade: 'grade_8',
+          emailAddress: 'test221@gmail.com',
+          employmentStatus: 'full_time',
+          homePhoneNumber: '+9999999998',
+          id: 'rishav-jha-mech',
+          isEmailAddressVerified: false,
+          maritalStatus: 'engaged',
+          mobilePhoneNumber: '+9999999999',
+          name: 'Rishav Jha',
+          natalSex: 'male',
+          naturalLanguageCode: 'en',
+          postalCode: '111111',
+          role: 'administrator',
+          state: 'State1',
+          updatedAt: dayjs().add(1, 'year').month(1).toISOString(),
+          workPhoneNumber: '+9999999998',
+          organizationsWhereMember: {
+            edges: [],
+          },
+          createdOrganizations: [],
+          eventsAttended: [
+            {
+              id: 'event1',
+            },
+            {
+              id: 'event2',
+            },
+          ],
+          __typename: 'User',
+        },
+      },
+    },
+  },
+  {
+    request: {
+      query: UPDATE_USER,
       variables: {
         input: {
           name: 'Test User',

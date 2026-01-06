@@ -20,9 +20,9 @@ import MemberDetail, { getLanguageName, prettyDate } from './ProfileForm';
 import {
   MOCKS1,
   MOCKS2,
-  ERROR_MOCK,
   MOCK_FILE,
   UPDATE_MOCK,
+  UPDATE_USER_ERROR_MOCKS,
 } from './profileForm.mock';
 import type { ApolloLink } from '@apollo/client';
 import { vi } from 'vitest';
@@ -32,7 +32,7 @@ import { urlToFile } from 'utils/urlToFile';
 
 const link1 = new StaticMockLink(MOCKS1, true);
 const link2 = new StaticMockLink(MOCKS2, true);
-const link3 = new StaticMockLink(ERROR_MOCK, true);
+const link3 = new StaticMockLink(UPDATE_USER_ERROR_MOCKS, true);
 const link4 = new StaticMockLink(MOCK_FILE, true);
 const link5 = new StaticMockLink(UPDATE_MOCK, true);
 
@@ -271,13 +271,12 @@ describe('MemberDetail', () => {
       const testDate = dayjs().format('YYYY-MM-DDTHH:mm:ss');
       const formattedDate = dayjs().format('D MMMM YYYY');
       expect(prettyDate(testDate)).toBe(formattedDate);
-      expect(prettyDate('')).toBe('Unavailable');
+      expect(prettyDate('')).toBe(null);
     });
 
     test('getLanguageName function should work properly', () => {
-      const getLangName = vi.fn(getLanguageName);
-      expect(getLangName('en')).toBe('English');
-      expect(getLangName('')).toBe('Unavailable');
+      expect(getLanguageName('en')).toBe('English');
+      expect(getLanguageName('')).toBe(null);
     });
 
     test('should render props and text elements test for the page component', async () => {
@@ -890,6 +889,7 @@ describe('MemberDetail', () => {
       // Should render the no events message
       const noEventsMessage = screen.queryByText('No events attended');
       if (noEventsMessage) {
+        // Note: MOCKS2 guarantees empty eventsAttended array
         expect(noEventsMessage).toBeInTheDocument();
       }
     });

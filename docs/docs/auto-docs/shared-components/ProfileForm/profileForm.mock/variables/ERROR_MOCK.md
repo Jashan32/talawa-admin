@@ -6,7 +6,7 @@
 
 > `const` **ERROR\_MOCK**: `object`[]
 
-Defined in: [src/shared-components/ProfileForm/profileForm.mock.ts:261](https://github.com/PalisadoesFoundation/talawa-admin/blob/main/src/shared-components/ProfileForm/profileForm.mock.ts#L261)
+Defined in: [src/shared-components/ProfileForm/profileForm.mock.ts:303](https://github.com/PalisadoesFoundation/talawa-admin/blob/main/src/shared-components/ProfileForm/profileForm.mock.ts#L303)
 
 ## Type Declaration
 

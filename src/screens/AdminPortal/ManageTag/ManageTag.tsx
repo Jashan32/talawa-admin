@@ -384,7 +384,7 @@ function ManageTag(): JSX.Element {
         return (
           <div>
             <Link
-              to={`/member/${orgId}`}
+              to={`/member/${orgId}/${params.row?._id}`}
               state={{ id: params.row?._id }}
               data-testid="viewProfileBtn"
             >

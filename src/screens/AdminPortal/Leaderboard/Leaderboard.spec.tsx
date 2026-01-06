@@ -70,7 +70,7 @@ const renderLeaderboard = (link: ApolloLink): RenderResult => {
               <Routes>
                 <Route path="/leaderboard/:orgId" element={<Leaderboard />} />
                 <Route
-                  path="/member/:orgId"
+                  path="/member/:orgId/:userId"
                   element={<div data-testid="memberScreen" />}
                 />
                 <Route

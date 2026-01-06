@@ -283,7 +283,7 @@ function EventAttendance(): JSX.Element {
                       data-testid={`attendee-name-${index}`}
                     >
                       <Link
-                        to={`/member/${currentUrl}`}
+                        to={`/member/${currentUrl}/${member.id}`}
                         state={{ id: member.id }}
                         className={styles.membername}
                       >

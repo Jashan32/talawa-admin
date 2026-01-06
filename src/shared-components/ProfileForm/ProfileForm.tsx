@@ -114,7 +114,6 @@ const MemberDetail: React.FC = (): JSX.Element => {
   const { t: tCommon } = useTranslation('common');
   const location = useLocation();
   const params = useParams();
-  const isMounted = useRef(true);
   const { getItem, setItem } = useLocalStorage();
   const [show, setShow] = useState(false);
   const [isUpdated, setisUpdated] = useState(false);
@@ -176,13 +175,6 @@ const MemberDetail: React.FC = (): JSX.Element => {
       originalImageState.current = userData.user?.avatarURL || '';
     }
   }, [userData]);
-
-  useEffect(() => {
-    // check component is mounted or not
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   // Function to handle the click on the edit icon
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -256,13 +248,9 @@ const MemberDetail: React.FC = (): JSX.Element => {
       }
     }
 
-    const data: Omit<
-      typeof formState,
-      | 'avatarURL'
-      | ('emailAddress' & {
-          id?: string;
-        })
-    > = {
+    const data: Omit<typeof formState, 'avatarURL' | 'emailAddress'> & {
+      id?: string;
+    } = {
       addressLine1: formState.addressLine1,
       addressLine2: formState.addressLine2,
       birthDate: formState.birthDate,
@@ -847,19 +835,19 @@ const MemberDetail: React.FC = (): JSX.Element => {
   );
 };
 
-export const prettyDate = (param: string): string => {
+export const prettyDate = (param: string): string | null => {
   const date = new Date(param);
   if (date?.toDateString() === 'Invalid Date') {
-    return 'Unavailable';
+    return null;
   }
   const day = date.getDate();
   const month = date.toLocaleString('default', { month: 'long' });
   const year = date.getFullYear();
   return `${day} ${month} ${year}`;
 };
-export const getLanguageName = (code: string): string => {
+export const getLanguageName = (code: string): string | null => {
   const found = languages.find((data) => data.code === code);
-  return found?.name ?? 'Unavailable';
+  return found?.name ?? null;
 };
 
 export default MemberDetail;

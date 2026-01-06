@@ -137,7 +137,7 @@ const renderManageTag = (link: ApolloLink): RenderResult => {
                 element={<div data-testid="subTagsScreen"></div>}
               />
               <Route
-                path="/member/:orgId"
+                path="/member/:orgId/:userId"
                 element={<div data-testid="memberProfileScreen"></div>}
               />
             </Routes>
