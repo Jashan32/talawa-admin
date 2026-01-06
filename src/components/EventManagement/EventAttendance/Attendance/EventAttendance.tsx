@@ -214,11 +214,7 @@ function EventAttendance(): JSX.Element {
           />
         </div>
       </div>
-      <TableContainer
-        component={Paper}
-        className="mt-3"
-        sx={{ borderRadius: '16px' }}
-      >
+      <TableContainer component={Paper} className="mt-3 rounded-4">
         <Table aria-label={t('event_attendance_table')} role="grid">
           <TableHead>
             <TableRow className="" data-testid="table-header-row">
@@ -283,7 +279,7 @@ function EventAttendance(): JSX.Element {
                       data-testid={`attendee-name-${index}`}
                     >
                       <Link
-                        to={`/member/${currentUrl}`}
+                        to={`/member/${currentUrl}/${member.id}`}
                         state={{ id: member.id }}
                         className={styles.membername}
                       >
@@ -301,16 +297,7 @@ function EventAttendance(): JSX.Element {
                     <Tooltip
                       componentsProps={{
                         tooltip: {
-                          sx: {
-                            backgroundColor: 'var(--bs-white)',
-                            fontSize: '2em',
-                            maxHeight: '170px',
-                            overflowY: 'scroll',
-                            scrollbarColor: 'white',
-                            border: 'var(--primary-border-solid)',
-                            borderRadius: '6px',
-                            boxShadow: '0 0 5px rgba(0,0,0,0.1)',
-                          },
+                          className: styles.customTooltip,
                         },
                       }}
                       title={member.eventsAttended?.map(
