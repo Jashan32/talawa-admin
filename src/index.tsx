@@ -56,7 +56,6 @@ if (import.meta.env.DEV) {
   loadErrorMessages();
 }
 
-// Track if we're currently refreshing to avoid multiple simultaneous refresh attempts
 let isRefreshing = false;
 let pendingRequests: Array<() => void> = [];
 
